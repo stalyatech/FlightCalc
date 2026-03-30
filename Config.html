@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Config Wizard — Flight Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--bg:#0c0f14;--bg2:#151921;--bg3:#1c2130;--bg4:#242a3a;--tx:#e8eaf0;--tx2:#9ca3b8;--tx3:#6b7280;--acc:#38bdf8;--grn:#34d399;--ylw:#fbbf24;--red:#f87171;--pur:#a78bfa;--brd:#2a3040;--rad:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding:20px}
+.wrap{max-width:860px;margin:0 auto}
+.hdr{text-align:center;padding:24px 0 16px;border-bottom:1px solid var(--brd);margin-bottom:20px}
+.hdr h1{font-size:22px;font-weight:700;letter-spacing:-.5px}.hdr h1 span{color:var(--acc)}
+.hdr p{font-size:12px;color:var(--tx3);margin-top:4px}
+.tabs{display:flex;gap:4px;margin-bottom:16px}
+.tab{padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--brd);background:transparent;color:var(--tx2);transition:all .15s}
+.tab.active{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--rad);padding:16px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:11px;color:var(--tx2);margin-bottom:3px}
+.field input,.field select,.field textarea{background:var(--bg3);color:var(--tx);border:1px solid var(--brd);border-radius:6px;padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;width:100%;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--acc)}
+.field textarea{font-family:'JetBrains Mono',monospace;font-size:11px;min-height:80px;resize:vertical}
+.field .hint{font-size:9px;color:var(--tx3);margin-top:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.btn{padding:8px 16px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--acc);color:var(--bg)}.btn-primary:hover{opacity:.85}
+.btn-green{background:var(--grn);color:var(--bg)}.btn-green:hover{opacity:.85}
+.btn-outline{background:transparent;border:1px solid var(--brd);color:var(--tx2)}.btn-outline:hover{border-color:var(--acc);color:var(--acc)}
+.actions{display:flex;gap:8px;margin-top:14px}
+.bat-row{display:grid;grid-template-columns:1fr 1fr 30px;gap:8px;align-items:end;margin-bottom:6px}
+.bat-row .remove-btn{background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px}
+.motor-grid{border:1px solid var(--brd);border-radius:8px;overflow:hidden;margin-top:8px}
+.motor-grid-header{display:grid;grid-template-columns:80px 1fr 1fr 1fr;background:var(--bg3);font-size:10px;color:var(--tx3);font-weight:600}
+.motor-grid-header>div{padding:6px 8px;border-right:1px solid var(--brd)}
+.motor-grid-header>div:last-child{border-right:none}
+.motor-grid-row{display:grid;grid-template-columns:80px 1fr 1fr 1fr;font-size:11px;border-top:1px solid var(--brd)}
+.motor-grid-row>div{padding:5px 8px;border-right:1px solid var(--brd)}
+.motor-grid-row>div:last-child{border-right:none}
+.motor-grid-row input{width:100%;background:var(--bg);border:1px solid var(--brd);border-radius:4px;padding:3px 6px;color:var(--tx);font-size:11px;font-family:'JetBrains Mono',monospace}
+.motor-grid-row .lbl{color:var(--tx2);font-weight:500;display:flex;align-items:center}
+.cells-check{display:flex;gap:10px;flex-wrap:wrap}
+.cells-check label{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tx2);cursor:pointer}
+.cells-check input[type=checkbox]{accent-color:var(--acc)}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--grn);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:100}
+.toast.show{opacity:1}
+.back-btn{position:absolute;left:0;top:20px;background:var(--bg3);border:1px solid var(--brd);border-radius:6px;padding:7px 12px;color:var(--tx2);cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;transition:all .15s;text-decoration:none}
+.back-btn:hover{border-color:var(--acc);color:var(--acc)}
+.back-btn svg{width:16px;height:16px}
+.hdr{position:relative}
+.edit-mode .tabs{display:none}
+.btn-update{background:var(--acc);color:var(--bg)}.btn-update:hover{opacity:.85}
+.edit-actions{display:none;gap:8px;margin-top:14px}
+.edit-mode .edit-actions{display:flex}
+.edit-mode .actions{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hdr">
+<a class="back-btn" id="backBtn" href="FlightCalc.html">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+Back
+</a>
+<h1>Config <span>Wizard</span></h1>
+<p id="hdr_sub">Generate configuration files for the Flight Calculator</p>
+</div>
+
+<div class="tabs">
+<div class="tab active" onclick="switchTab(0)">Airframe</div>
+<div class="tab" onclick="switchTab(1)">Motor</div>
+<div class="tab" onclick="switchTab(2)">Propeller</div>
+<div class="tab" onclick="switchTab(3)">Battery</div>
+</div>
+
+<!-- ===== AIRFRAME TAB ===== -->
+<div class="panel active" id="pan0">
+<div class="card">
+<div class="card-title">Basic info</div>
+<div class="row2">
+<div class="field"><label>Name</label><input id="af_name" placeholder="e.g. Flightory Stallion V2" oninput="autoSlug('af_name','af_id')"></div>
+<div class="field"><label>ID (auto)</label><input id="af_id" placeholder="stallion-v2"></div>
+</div>
+<div class="row2">
+<div class="field"><label>Type</label><select id="af_type"><option value="vtol">VTOL</option><option value="fixed">Fixed Wing</option></select></div>
+<div class="field"><label>Description</label><input id="af_desc" placeholder="e.g. Tricopter tilt-rotor VTOL"></div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">Wing geometry</div>
+<div class="row3">
+<div class="field"><label>Wing area (dm²)</label><input type="number" id="af_wa" step="0.1" placeholder="26.5" oninput="calcAR()"></div>
+<div class="field"><label>Wingspan (mm)</label><input type="number" id="af_span" placeholder="1340" oninput="calcAR()"></div>
+<div class="field"><label>Aspect ratio (auto)</label><input id="af_ar" readonly></div>
+</div>
+<div class="row3">
+<div class="field"><label>MAC (mm)</label><input type="number" id="af_mac" step="1" placeholder="211"></div>
+<div class="field"><label>Oswald efficiency</label><input type="number" id="af_oe" step="0.01" value="0.75" placeholder="0.75"></div>
+<div class="field"><label>CD0 penalty</label><input type="number" id="af_cd0" step="0.001" value="0.008" placeholder="0.008"><div class="hint">Surface roughness (3D-print ~0.008)</div></div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">Airfoil</div>
+<div class="row2">
+<div class="field"><label>Airfoil name</label><input id="af_foil" placeholder="e.g. Eppler E205"></div>
+<div class="field"><label>CLmax (3D)</label><input type="number" id="af_clmax" step="0.01" value="1.2" placeholder="1.2"></div>
+</div>
+<div class="field">
+<label>Polar data (AoA, CL, CD — one row per line, CSV)</label>
+<textarea id="af_polar" placeholder="-4, -0.15, 0.012
+-2, 0.10, 0.009
+0, 0.35, 0.0075
+2, 0.65, 0.0074
+4, 0.90, 0.009
+6, 1.12, 0.0125
+8, 1.25, 0.02
+10, 1.28, 0.034
+12, 1.18, 0.058"></textarea>
+<div class="hint">Paste XFOIL output or CSV. Lines starting with # are ignored. Format: AoA, CL, CD</div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">Motor configuration</div>
+<div class="row3">
+<div class="field"><label>Total motors (hover)</label><input type="number" id="af_nm" value="3" min="1"></div>
+<div class="field"><label>Cruise motors</label><input type="number" id="af_ncm" value="2" min="1"></div>
+<div class="field"><label>Layout</label><input id="af_layout" placeholder="e.g. tricopter-tilt"></div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">Design limits</div>
+<div class="row2">
+<div class="field"><label>Max AUW (g)</label><input type="number" id="af_auw" value="3000"></div>
+<div class="field"><label>Default frame weight (g)</label><input type="number" id="af_dfw" value="1380"></div>
+</div>
+<div class="row4">
+<div class="field"><label>WL caution (g/dm²)</label><input type="number" id="af_wlc" value="100"></div>
+<div class="field"><label>WL danger (g/dm²)</label><input type="number" id="af_wld" value="115"></div>
+<div class="field"><label>T/W minimum</label><input type="number" id="af_twm" step="0.1" value="1.2"></div>
+<div class="field"><label>T/W good</label><input type="number" id="af_twg" step="0.1" value="1.5"></div>
+</div>
+<div class="row2">
+<div class="field"><label>Transition multiplier</label><input type="number" id="af_trm" step="0.1" value="1.2"><div class="hint">transition power = avg(hover,cruise) × this</div></div>
+<div class="field"><label>Usable battery %</label><input type="number" id="af_ub" step="1" value="80" min="50" max="100"><div class="hint">LiPo typical: 80%</div></div>
+</div>
+</div>
+
+<div class="actions">
+<button class="btn btn-green" onclick="saveConfig('airframe')">Save</button>
+</div>
+<div class="edit-actions">
+<button class="btn btn-update" onclick="updateConfig('airframe')">Update</button>
+</div>
+</div>
+
+<!-- ===== MOTOR TAB ===== -->
+<div class="panel" id="pan1">
+<div class="card">
+<div class="card-title">Motor info</div>
+<div class="row2">
+<div class="field"><label>Name</label><input id="mt_name" placeholder="e.g. T-Motor F90" oninput="autoSlug('mt_name','mt_id')"></div>
+<div class="field"><label>ID (auto)</label><input id="mt_id" placeholder="t-motor-f90"></div>
+</div>
+<div class="row2">
+<div class="field"><label>KV</label><input type="number" id="mt_kv" placeholder="1300"></div>
+<div class="field"><label>Default cells</label><input type="number" id="mt_defcells" placeholder="6" min="2" max="8"></div>
+</div>
+<div class="field">
+<label>Compatible cells</label>
+<div class="cells-check" id="mt_cells">
+<label><input type="checkbox" value="2"> 2S</label>
+<label><input type="checkbox" value="3"> 3S</label>
+<label><input type="checkbox" value="4" checked> 4S</label>
+<label><input type="checkbox" value="5"> 5S</label>
+<label><input type="checkbox" value="6" checked> 6S</label>
+<label><input type="checkbox" value="7"> 7S</label>
+<label><input type="checkbox" value="8"> 8S</label>
+</div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">Performance data (per cell × per prop)</div>
+<div class="hint" style="margin-bottom:8px">Enter thrust (g per motor), hover efficiency, and cruise efficiency for each combination. Leave blank to skip.</div>
+<div id="motor_grid_container"></div>
+<button class="btn btn-outline" style="margin-top:8px" onclick="rebuildMotorGrid()">Refresh grid</button>
+</div>
+
+<div class="actions">
+<button class="btn btn-green" onclick="saveConfig('motor')">Save</button>
+</div>
+<div class="edit-actions">
+<button class="btn btn-update" onclick="updateConfig('motor')">Update</button>
+</div>
+</div>
+
+<!-- ===== PROPELLER TAB ===== -->
+<div class="panel" id="pan2">
+<div class="card">
+<div class="card-title">Propeller info</div>
+<div class="row2">
+<div class="field"><label>Name</label><input id="pr_name" placeholder="e.g. Gemfan 7042" oninput="autoSlug('pr_name','pr_id')"></div>
+<div class="field"><label>ID (auto)</label><input id="pr_id" placeholder="gf7042"></div>
+</div>
+<div class="row3">
+<div class="field"><label>Diameter (inches)</label><input type="number" id="pr_dia" step="0.1" placeholder="7"><div class="hint" id="pr_dia_m"></div></div>
+<div class="field"><label>Blades</label><input type="number" id="pr_blades" value="2" min="2" max="6"></div>
+<div class="field"><label>Info text</label><input id="pr_info" placeholder="e.g. 7×4.2 · 2B"><div class="hint">Shown in calculator dropdown</div></div>
+</div>
+</div>
+
+<div class="actions">
+<button class="btn btn-green" onclick="saveConfig('prop')">Save</button>
+</div>
+<div class="edit-actions">
+<button class="btn btn-update" onclick="updateConfig('prop')">Update</button>
+</div>
+</div>
+
+<!-- ===== BATTERY TAB ===== -->
+<div class="panel" id="pan3">
+<div class="card">
+<div class="card-title">Battery info</div>
+<div class="row3">
+<div class="field"><label>Name</label><input id="bt_name" placeholder="e.g. 6S LiPo" oninput="autoSlug('bt_name','bt_id')"></div>
+<div class="field"><label>Cells</label><input type="number" id="bt_cells" value="4" min="1" max="14" oninput="calcBatV()"></div>
+<div class="field"><label>Voltage (auto)</label><input id="bt_volt" readonly></div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">Capacity options</div>
+<div id="bat_rows">
+<div class="bat-row">
+<div class="field"><label>Capacity (mAh)</label><input type="number" class="bt_mah" value="8000"></div>
+<div class="field"><label>Weight (g)</label><input type="number" class="bt_wt" value="700"></div>
+<div></div>
+</div>
+</div>
+<button class="btn btn-outline" style="margin-top:6px" onclick="addBatRow()">+ Add option</button>
+</div>
+
+<div class="actions">
+<button class="btn btn-green" onclick="saveConfig('battery')">Save</button>
+</div>
+<div class="edit-actions">
+<button class="btn btn-update" onclick="updateConfig('battery')">Update</button>
+</div>
+</div>
+
+</div><!-- wrap -->
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+// === TAB SWITCHING ===
+function switchTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',j===i));
+}
+
+// === HELPERS ===
+function $(id){return document.getElementById(id);}
+function autoSlug(srcId,dstId){
+  const v=$(srcId).value.trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  $(dstId).value=v;
+}
+function showToast(msg,dur){
+  const t=$('toast');t.textContent=msg||'Copied to clipboard!';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur||2000);
+}
+// === FILE SAVE ===
+function genForType(type){
+  if(type==='airframe') return genAirframe();
+  if(type==='motor') return genMotor();
+  if(type==='prop') return genProp();
+  if(type==='battery') return genBat();
+  return null;
+}
+
+function downloadFile(name,content){
+  const blob=new Blob([content],{type:'text/javascript'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=name;a.click();URL.revokeObjectURL(a.href);
+}
+
+async function saveConfig(type){
+  const g=genForType(type);
+  if(!g) return;
+  const fname=g.path.split('/').pop();
+  if(window.showSaveFilePicker){
+    try{
+      const fh=await window.showSaveFilePicker({suggestedName:fname,types:[{accept:{'text/javascript':['.js']}}]});
+      const wr=await fh.createWritable();
+      await wr.write(g.js);
+      await wr.close();
+      showToast('Saved '+fname,3000);
+      return;
+    }catch(e){if(e.name==='AbortError') return;}
+  }
+  downloadFile(fname,g.js);
+  showToast('Downloaded '+fname,3000);
+}
+
+// === AIRFRAME: AR auto-calc ===
+function calcAR(){
+  const wa=parseFloat($('af_wa').value); // dm²
+  const span=parseFloat($('af_span').value); // mm
+  if(wa>0&&span>0){
+    const spanM=span/1000;
+    const areaM2=wa/100;
+    $('af_ar').value=(spanM*spanM/areaM2).toFixed(2);
+  }
+}
+
+// === AIRFRAME: Parse polar ===
+function parsePolar(text){
+  const lines=text.trim().split('\n');
+  const data=[];
+  for(const line of lines){
+    const trimmed=line.trim();
+    if(!trimmed||trimmed.startsWith('#')) continue;
+    const parts=trimmed.split(/[,\s\t]+/).map(Number);
+    if(parts.length>=3&&!parts.some(isNaN)){
+      data.push([parts[0],parts[1],parts[2]]);
+    }
+  }
+  return data;
+}
+
+// === AIRFRAME: Generate ===
+function genAirframe(){
+  const name=$('af_name').value.trim()||'Unnamed';
+  const id=$('af_id').value.trim()||'unnamed';
+  const type=$('af_type').value;
+  const desc=$('af_desc').value.trim();
+  const wa=parseFloat($('af_wa').value)||26.5;
+  const span=parseFloat($('af_span').value)||1340;
+  const spanM=span/1000;
+  const areaM2=wa/100;
+  const ar=parseFloat($('af_ar').value)||(spanM*spanM/areaM2);
+  const mac=parseFloat($('af_mac').value)||211;
+  const oe=parseFloat($('af_oe').value)||0.75;
+  const cd0=parseFloat($('af_cd0').value)||0.008;
+  const foil=$('af_foil').value.trim()||'Unknown';
+  const clmax=parseFloat($('af_clmax').value)||1.2;
+  const polar=parsePolar($('af_polar').value);
+  const nm=parseInt($('af_nm').value)||3;
+  const ncm=parseInt($('af_ncm').value)||2;
+  const layout=$('af_layout').value.trim()||'unknown';
+  const auw=parseInt($('af_auw').value)||3000;
+  const dfw=parseInt($('af_dfw').value)||1380;
+  const wlc=parseInt($('af_wlc').value)||100;
+  const wld=parseInt($('af_wld').value)||115;
+  const twm=parseFloat($('af_twm').value)||1.2;
+  const twg=parseFloat($('af_twg').value)||1.5;
+  const trm=parseFloat($('af_trm').value)||1.2;
+  const ub=parseInt($('af_ub').value)||80;
+
+  const polarStr=polar.map(r=>'    ['+r[0]+', '+r[1]+', '+r[2]+']').join(',\n');
+
+  let js=`// ${name} — ${desc||type}\n`;
+  js+=`// Generated by Config Wizard\n\n`;
+  js+=`CFG.airframes.push({\n`;
+  js+=`  id:          "${id}",\n`;
+  js+=`  name:        "${name}",\n`;
+  js+=`  type:        "${type}",\n`;
+  js+=`  description: "${desc}",\n\n`;
+  js+=`  // Wing geometry\n`;
+  js+=`  wingArea:    ${areaM2.toFixed(4)},       // m²\n`;
+  js+=`  wingAreaDm2: ${wa},        // dm²\n`;
+  js+=`  wingspan:    ${spanM.toFixed(3)},       // m\n`;
+  js+=`  aspectRatio: ${ar.toFixed?ar.toFixed(1):ar},\n`;
+  js+=`  oswaldEff:   ${oe},\n`;
+  js+=`  mac:         ${(mac/1000).toFixed(3)},       // m\n\n`;
+  js+=`  // Airfoil\n`;
+  js+=`  airfoilName: "${foil}",\n`;
+  js+=`  airfoilPolar: [\n${polarStr}\n  ],\n`;
+  js+=`  cd0Penalty:  ${cd0},\n`;
+  js+=`  clMax:       ${clmax},\n\n`;
+  js+=`  // Motor configuration\n`;
+  js+=`  numMotors:       ${nm},\n`;
+  js+=`  numCruiseMotors: ${ncm},\n`;
+  js+=`  motorLayout:     "${layout}",\n\n`;
+  js+=`  // Design limits\n`;
+  js+=`  auwMax:            ${auw},\n`;
+  js+=`  defaultFrameWeight: ${dfw},\n\n`;
+  js+=`  // Wing loading thresholds (g/dm²)\n`;
+  js+=`  wlCaution: ${wlc},\n`;
+  js+=`  wlDanger:  ${wld},\n\n`;
+  js+=`  // T/W thresholds\n`;
+  js+=`  twMin:  ${twm},\n`;
+  js+=`  twGood: ${twg},\n\n`;
+  js+=`  // Power model\n`;
+  js+=`  transitionMult: ${trm},\n`;
+  js+=`  usableBattery:  ${(ub/100).toFixed(2)},\n\n`;
+  js+=`  // Compatibility filters (empty = all allowed)\n`;
+  js+=`  compatMotors:    [],\n`;
+  js+=`  compatProps:     [],\n`;
+  js+=`  compatBatteries: []\n`;
+  js+=`});\n`;
+  return{js,id,path:'config/airframes/'+id+'.js'};
+}
+
+
+// === MOTOR: Grid builder ===
+let KNOWN_PROPS=['gf7042','hq7x55','hq7x4x3'];
+
+function getCheckedCells(){
+  return Array.from(document.querySelectorAll('#mt_cells input:checked')).map(cb=>+cb.value).sort((a,b)=>a-b);
+}
+
+function rebuildMotorGrid(){
+  const cells=getCheckedCells();
+  const container=$('motor_grid_container');
+  container.innerHTML='';
+  if(!cells.length){container.innerHTML='<div style="color:var(--tx3);font-size:11px">Select at least one cell count above.</div>';return;}
+
+  for(const c of cells){
+    const title=document.createElement('div');
+    title.style.cssText='font-size:11px;font-weight:600;color:var(--acc);margin:10px 0 4px';
+    title.textContent=c+'S';
+    container.appendChild(title);
+
+    const grid=document.createElement('div');
+    grid.className='motor-grid';
+    grid.innerHTML=`<div class="motor-grid-header"><div>Prop</div><div>Thrust (g)</div><div>Hover Eff</div><div>Cruise Eff</div></div>`;
+    for(const pid of KNOWN_PROPS){
+      const row=document.createElement('div');
+      row.className='motor-grid-row';
+      row.innerHTML=`<div class="lbl">${pid}</div><div><input type="number" id="mg_${c}_${pid}_t" placeholder="0"></div><div><input type="number" id="mg_${c}_${pid}_h" step="0.01" placeholder="0.50"></div><div><input type="number" id="mg_${c}_${pid}_c" step="0.01" placeholder="0.60"></div>`;
+      grid.appendChild(row);
+    }
+    container.appendChild(grid);
+  }
+}
+
+function genMotor(){
+  const name=$('mt_name').value.trim()||'Unnamed Motor';
+  const id=$('mt_id').value.trim()||'unnamed-motor';
+  const kv=parseInt($('mt_kv').value)||1300;
+  const defCells=parseInt($('mt_defcells').value)||6;
+  const cells=getCheckedCells();
+
+  let propDataStr='';
+  for(const c of cells){
+    let entries=[];
+    for(const pid of KNOWN_PROPS){
+      const tEl=$('mg_'+c+'_'+pid+'_t');
+      const hEl=$('mg_'+c+'_'+pid+'_h');
+      const cEl=$('mg_'+c+'_'+pid+'_c');
+      if(!tEl) continue;
+      const t=parseInt(tEl.value);
+      const h=parseFloat(hEl.value);
+      const ce=parseFloat(cEl.value);
+      if(t>0){
+        entries.push(`      "${pid}":  { thrust: ${t}, hoverEff: ${h||0.50}, cruiseEff: ${ce||0.60} }`);
+      }
+    }
+    if(entries.length){
+      propDataStr+=`    "${c}": {\n${entries.join(',\n')}\n    }`;
+      if(c!==cells[cells.length-1]) propDataStr+=',\n';else propDataStr+='\n';
+    }
+  }
+
+  let js=`// ${name} ${kv}KV Motor Configuration\n`;
+  js+=`// Generated by Config Wizard\n\n`;
+  js+=`CFG.motors.push({\n`;
+  js+=`  id:           "${id}",\n`;
+  js+=`  name:         "${name}",\n`;
+  js+=`  kv:           ${kv},\n`;
+  js+=`  cells:        [${cells.join(', ')}],\n`;
+  js+=`  defaultCells: ${defCells},\n`;
+  js+=`  propData: {\n${propDataStr}  }\n`;
+  js+=`});\n`;
+  return{js,id,path:'config/motors/'+id+'.js'};
+}
+
+
+// === PROPELLER ===
+function genProp(){
+  const name=$('pr_name').value.trim()||'Unnamed Prop';
+  const id=$('pr_id').value.trim()||'unnamed-prop';
+  const dia=parseFloat($('pr_dia').value)||7;
+  const diaM=(dia*0.0254).toFixed(3);
+  const blades=parseInt($('pr_blades').value)||2;
+  const info=$('pr_info').value.trim()||dia+'×? · '+blades+'B';
+
+  let js=`// ${name} Propeller Configuration\n`;
+  js+=`// Generated by Config Wizard\n\n`;
+  js+=`CFG.props.push({\n`;
+  js+=`  id:       "${id}",\n`;
+  js+=`  name:     "${name}",\n`;
+  js+=`  diameter: ${diaM},  // m (${dia}")\n`;
+  js+=`  blades:   ${blades},\n`;
+  js+=`  info:     "${info}"\n`;
+  js+=`});\n`;
+  return{js,id,path:'config/props/'+id+'.js'};
+}
+
+
+// Diameter hint
+$('pr_dia').addEventListener('input',function(){
+  const v=parseFloat(this.value);
+  $('pr_dia_m').textContent=v>0?(v*0.0254).toFixed(3)+' m':'';
+});
+
+// === BATTERY ===
+function calcBatV(){
+  const c=parseInt($('bt_cells').value)||4;
+  $('bt_volt').value=(c*3.7).toFixed(1)+'V';
+}
+calcBatV();
+
+function addBatRow(){
+  const container=$('bat_rows');
+  const row=document.createElement('div');
+  row.className='bat-row';
+  row.innerHTML=`<div class="field"><input type="number" class="bt_mah" placeholder="mAh"></div><div class="field"><input type="number" class="bt_wt" placeholder="weight (g)"></div><div><button class="remove-btn" onclick="this.parentElement.parentElement.remove()">×</button></div>`;
+  container.appendChild(row);
+}
+
+function genBat(){
+  const name=$('bt_name').value.trim()||'LiPo';
+  const cells=parseInt($('bt_cells').value)||4;
+  const voltage=cells*3.7;
+
+  const rows=document.querySelectorAll('#bat_rows .bat-row');
+  const options=[];
+  rows.forEach(row=>{
+    const mah=parseInt(row.querySelector('.bt_mah').value);
+    const wt=parseInt(row.querySelector('.bt_wt').value);
+    if(mah>0&&wt>0) options.push({mah,weight:wt});
+  });
+  options.sort((a,b)=>a.mah-b.mah);
+
+  const optStr=options.map(o=>`    { mah: ${o.mah}, weight: ${o.weight} }`).join(',\n');
+  const id=cells+'s';
+
+  let js=`// ${cells}S LiPo Battery Configuration\n`;
+  js+=`// Generated by Config Wizard\n\n`;
+  js+=`CFG.batteries.push({\n`;
+  js+=`  name:    "${name}",\n`;
+  js+=`  cells:   ${cells},\n`;
+  js+=`  voltage: ${voltage.toFixed(1)},\n`;
+  js+=`  options: [\n${optStr}\n  ]\n`;
+  js+=`});\n`;
+  return{js,id,path:'config/batteries/'+id+'.js'};
+}
+
+
+// === EDIT MODE: Populate from sessionStorage ===
+function populateAirframe(af){
+  $('af_name').value=af.name||'';
+  $('af_id').value=af.id||'';
+  $('af_type').value=af.type||'vtol';
+  $('af_desc').value=af.description||'';
+  $('af_wa').value=af.wingAreaDm2||'';
+  $('af_span').value=af.wingspan?Math.round(af.wingspan*1000):'';
+  calcAR();
+  $('af_mac').value=af.mac?Math.round(af.mac*1000):'';
+  $('af_oe').value=af.oswaldEff||0.75;
+  $('af_cd0').value=af.cd0Penalty||0.008;
+  $('af_foil').value=af.airfoilName||'';
+  $('af_clmax').value=af.clMax||1.2;
+  if(af.airfoilPolar&&af.airfoilPolar.length){
+    $('af_polar').value=af.airfoilPolar.map(r=>r.join(', ')).join('\n');
+  }
+  $('af_nm').value=af.numMotors||3;
+  $('af_ncm').value=af.numCruiseMotors||2;
+  $('af_layout').value=af.motorLayout||'';
+  $('af_auw').value=af.auwMax||3000;
+  $('af_dfw').value=af.defaultFrameWeight||1380;
+  $('af_wlc').value=af.wlCaution||100;
+  $('af_wld').value=af.wlDanger||115;
+  $('af_twm').value=af.twMin||1.2;
+  $('af_twg').value=af.twGood||1.5;
+  $('af_trm').value=af.transitionMult||1.2;
+  $('af_ub').value=af.usableBattery?Math.round(af.usableBattery*100):80;
+}
+
+function populateMotor(mt){
+  $('mt_name').value=mt.name||'';
+  $('mt_id').value=mt.id||'';
+  $('mt_kv').value=mt.kv||'';
+  $('mt_defcells').value=mt.defaultCells||6;
+  // Set cell checkboxes
+  document.querySelectorAll('#mt_cells input[type=checkbox]').forEach(cb=>{
+    cb.checked=(mt.cells||[]).includes(+cb.value);
+  });
+  rebuildMotorGrid();
+  // Fill performance data
+  if(mt.propData){
+    for(const c of Object.keys(mt.propData)){
+      for(const pid of Object.keys(mt.propData[c])){
+        const d=mt.propData[c][pid];
+        const tEl=$('mg_'+c+'_'+pid+'_t');
+        const hEl=$('mg_'+c+'_'+pid+'_h');
+        const cEl=$('mg_'+c+'_'+pid+'_c');
+        if(tEl) tEl.value=d.thrust||'';
+        if(hEl) hEl.value=d.hoverEff||'';
+        if(cEl) cEl.value=d.cruiseEff||'';
+      }
+    }
+  }
+}
+
+function populateProp(pr){
+  $('pr_name').value=pr.name||'';
+  $('pr_id').value=pr.id||'';
+  const diaInch=pr.diameter?+(pr.diameter/0.0254).toFixed(1):7;
+  $('pr_dia').value=diaInch;
+  $('pr_blades').value=pr.blades||2;
+  $('pr_info').value=pr.info||'';
+  $('pr_dia_m').textContent=pr.diameter?pr.diameter.toFixed(3)+' m':'';
+}
+
+function populateBat(bt){
+  $('bt_name').value=bt.name||'';
+  $('bt_cells').value=bt.cells||4;
+  calcBatV();
+  // Clear existing rows and add from config
+  const container=$('bat_rows');
+  container.innerHTML='';
+  if(bt.options&&bt.options.length){
+    bt.options.forEach((opt,i)=>{
+      const row=document.createElement('div');
+      row.className='bat-row';
+      if(i===0){
+        row.innerHTML=`<div class="field"><label>Capacity (mAh)</label><input type="number" class="bt_mah" value="${opt.mah}"></div><div class="field"><label>Weight (g)</label><input type="number" class="bt_wt" value="${opt.weight}"></div><div></div>`;
+      } else {
+        row.innerHTML=`<div class="field"><input type="number" class="bt_mah" value="${opt.mah}"></div><div class="field"><input type="number" class="bt_wt" value="${opt.weight}"></div><div><button class="remove-btn" onclick="this.parentElement.parentElement.remove()">×</button></div>`;
+      }
+      container.appendChild(row);
+    });
+  }
+}
+
+// === UPDATE CONFIG (edit mode) ===
+let _editOriginalPath='';
+
+async function updateConfig(type){
+  const g=genForType(type);
+  if(!g) return;
+  const filePath=_editOriginalPath||g.path;
+  const fname=filePath.split('/').pop();
+  if(window.showSaveFilePicker){
+    try{
+      const fh=await window.showSaveFilePicker({suggestedName:fname,types:[{accept:{'text/javascript':['.js']}}]});
+      const wr=await fh.createWritable();
+      await wr.write(g.js);
+      await wr.close();
+      showToast('Updated '+fname,3000);
+      return;
+    }catch(e){if(e.name==='AbortError') return;}
+  }
+  downloadFile(fname,g.js);
+  showToast('Downloaded '+fname,3000);
+}
+
+// === INIT ===
+(function init(){
+  const params=new URLSearchParams(window.location.search);
+  const editType=params.get('edit');
+  let editData=null;
+
+  if(editType){
+    try{
+      const stored=sessionStorage.getItem('editConfig');
+      if(stored){
+        const cfg=JSON.parse(stored);
+        editData=cfg.data;
+        // Update KNOWN_PROPS from loaded config if available
+        if(cfg.allProps&&cfg.allProps.length) KNOWN_PROPS=cfg.allProps;
+      }
+    }catch(e){}
+  }
+
+  // Build motor grid (needs KNOWN_PROPS set first)
+  rebuildMotorGrid();
+  // Re-build motor grid when cells change
+  document.querySelectorAll('#mt_cells input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change',rebuildMotorGrid);
+  });
+
+  if(editType&&editData){
+    // Enable edit mode UI
+    document.querySelector('.wrap').classList.add('edit-mode');
+
+    // Update header
+    const typeLabels={airframe:'Airframe',motor:'Motor',prop:'Propeller',battery:'Battery'};
+    document.querySelector('.hdr h1').innerHTML='Edit <span>'+( typeLabels[editType]||'Config')+'</span>';
+    $('hdr_sub').textContent=editData.name+(editData.id?' ('+editData.id+')':'');
+
+    // Store original file path for update
+    const pathMap={airframe:'config/airframes/',motor:'config/motors/',prop:'config/props/',battery:'config/batteries/'};
+    _editOriginalPath=(pathMap[editType]||'config/')+(editData.id||'unnamed')+'.js';
+
+    // Switch to correct tab (panels still use switchTab internally)
+    const tabMap={airframe:0,motor:1,prop:2,battery:3};
+    const tabIdx=tabMap[editType]||0;
+    switchTab(tabIdx);
+
+    // Populate form
+    if(editType==='airframe') populateAirframe(editData);
+    else if(editType==='motor') populateMotor(editData);
+    else if(editType==='prop') populateProp(editData);
+    else if(editType==='battery') populateBat(editData);
+  }
+})();
+</script>
+</body>
+</html>

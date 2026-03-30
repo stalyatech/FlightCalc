@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flight Time & Aero Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--bg:#0c0f14;--bg2:#151921;--bg3:#1c2130;--bg4:#242a3a;--tx:#e8eaf0;--tx2:#9ca3b8;--tx3:#6b7280;--acc:#38bdf8;--grn:#34d399;--ylw:#fbbf24;--red:#f87171;--pur:#a78bfa;--brd:#2a3040;--rad:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding:20px}
+.wrap{max-width:920px;margin:0 auto}
+.hdr{text-align:center;padding:24px 0 16px;border-bottom:1px solid var(--brd);margin-bottom:20px;position:relative}
+.hdr h1{font-size:22px;font-weight:700;letter-spacing:-.5px}.hdr h1 span{color:var(--acc)}
+.hdr p{font-size:12px;color:var(--tx3);margin-top:4px}
+.hdr-menu{position:absolute;top:20px;right:0}
+.hdr-menu-btn{background:var(--bg3);border:1px solid var(--brd);border-radius:6px;padding:7px;color:var(--tx3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:0}
+.hdr-menu-btn:hover{border-color:var(--acc);color:var(--acc)}
+.hdr-menu-btn svg{width:18px;height:18px}
+.hdr-dropdown{display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--bg2);border:1px solid var(--brd);border-radius:8px;min-width:200px;padding:4px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.4);white-space:nowrap}
+.hdr-dropdown.open{display:block}
+.hdr-dropdown a{display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:12px;font-weight:500;color:var(--tx2);text-decoration:none;border-radius:6px;transition:all .12s}
+.hdr-dropdown a:hover{background:var(--bg3);color:var(--acc)}
+.hdr-dropdown a svg{width:15px;height:15px;flex-shrink:0;opacity:.6}
+.hdr-dropdown .sep{border-top:1px solid var(--brd);margin:4px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}.sel-row .card{flex:1 1 100%!important}}
+.card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--rad);padding:14px}
+.card-title{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px}
+.row .lb{color:var(--tx2)}.row .v{font-weight:500;font-family:'JetBrains Mono',monospace;font-size:11px}
+.hi{color:var(--acc)}.go{color:var(--grn)}.wa{color:var(--ylw)}.ba{color:var(--red)}.pu{color:var(--pur)}
+.dv{border-top:1px solid var(--brd);margin-top:4px;padding-top:4px}
+.sr{margin:5px 0}.sl{display:flex;justify-content:space-between;font-size:10px;color:var(--tx3);margin-bottom:2px}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--bg4);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--acc);cursor:pointer}
+select{background:var(--bg3);color:var(--tx);border:1px solid var(--brd);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'DM Sans',sans-serif;width:100%;cursor:pointer}
+.sel-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.sel-row .card{padding:10px;position:relative;flex:1 1 120px;min-width:120px}
+.sel-row .card:first-child{flex:2 1 200px;min-width:180px}
+.sel-row select{margin-top:2px}
+.cdd{position:relative}
+.cdd-btn{background:var(--bg3);color:var(--tx);border:1px solid var(--brd);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'DM Sans',sans-serif;width:100%;cursor:pointer;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:2px}
+.cdd-btn::after{content:'▾';font-size:9px;color:var(--tx3);flex-shrink:0}
+.cdd-btn:hover{border-color:var(--acc)}
+.cdd-list{display:none;position:absolute;top:100%;left:0;margin-top:2px;background:var(--bg2);border:1px solid var(--brd);border-radius:8px;padding:3px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.5);white-space:nowrap;max-height:260px;overflow-y:auto;min-width:100%}
+.cdd-list.open{display:block}
+.cdd-item{padding:6px 10px;font-size:11px;color:var(--tx2);border-radius:5px;cursor:pointer;transition:background .1s}
+.cdd-item:hover{background:var(--bg3);color:var(--tx)}
+.cdd-item.active{color:var(--acc);font-weight:600}
+.result-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--brd);border-radius:var(--rad);padding:16px;text-align:center;margin-top:14px}
+.big{font-size:32px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1.2}
+.sub{font-size:10px;color:var(--tx3);margin-top:3px}
+.pb{display:flex;gap:2px;margin-top:10px;border-radius:6px;overflow:hidden;height:20px}
+.ph{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff}
+.p-h{background:#ef4444}.p-t{background:#f59e0b}.p-c{background:#10b981}
+.ga{display:flex;gap:8px;margin-top:12px;justify-content:center;flex-wrap:wrap}
+.gi{text-align:center;min-width:58px;padding:6px;background:var(--bg);border-radius:6px}
+.gv{font-size:15px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.gl{font-size:9px;color:var(--tx3);margin-top:1px}
+.mode-tabs{display:flex;gap:4px;margin-top:14px}
+.mtab{padding:7px 12px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--brd);background:transparent;color:var(--tx2);transition:all .15s}
+.mtab.active{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.mpan{display:none;margin-top:10px}.mpan.active{display:block}
+.warn{margin-top:6px;padding:7px 10px;border-radius:6px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);font-size:10px;color:var(--red);display:none}
+.warn.yellow{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.2);color:var(--ylw)}
+.note{font-size:9px;color:var(--tx3);margin-top:14px;line-height:1.5;padding:10px;background:var(--bg2);border-radius:var(--rad);border:1px solid var(--brd)}
+.full{grid-column:1/-1}
+canvas{width:100%;border-radius:8px;margin-top:8px}
+.aero-info{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.ai{flex:1;min-width:80px;padding:8px;background:var(--bg);border-radius:6px;text-align:center}
+.ai .av{font-size:16px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.ai .al{font-size:9px;color:var(--tx3);margin-top:2px}
+#loadErr{display:none;padding:40px;text-align:center;color:var(--red)}
+#loadErr h2{margin-bottom:10px}
+#loadErr code{background:var(--bg3);padding:4px 10px;border-radius:4px;font-size:12px}
+#appWrap{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hdr">
+<h1><span id="hdr_name">Flight Calculator</span> — Flight Time & Aero Analyzer</h1>
+<p id="hdr_sub">Loading…</p>
+<div class="hdr-menu">
+<button class="hdr-menu-btn" onclick="toggleMenu()" id="menuBtn" title="Menu">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+</button>
+<div class="hdr-dropdown" id="menuDrop">
+<a href="Config.html">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+New Config…
+</a>
+<div class="sep"></div>
+<a href="#" onclick="editConfig('airframe');return false">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+Edit Airframe…
+</a>
+<a href="#" onclick="editConfig('motor');return false">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+Edit Motor…
+</a>
+<a href="#" onclick="editConfig('prop');return false">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+Edit Propeller…
+</a>
+<a href="#" onclick="editConfig('battery');return false">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+Edit Battery…
+</a>
+<div class="sep"></div>
+<a href="#" onclick="exportPDF();return false">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+Export PDF
+</a>
+</div>
+</div>
+</div>
+<div id="loadErr">
+<h2>Config files could not be loaded</h2>
+<p>If opening from <code>file://</code>, some browsers block local script loading.<br>
+Serve from a local HTTP server instead:</p>
+<p style="margin-top:10px"><code>python -m http.server 8000</code></p>
+<p style="margin-top:6px;color:var(--tx3)" id="loadErrDetail"></p>
+</div>
+<div id="appWrap">
+<div class="sel-row">
+<div class="card">
+<div class="card-title">Airframe</div>
+<div class="cdd" id="d_airframe"><button class="cdd-btn" onclick="toggleCdd('d_airframe')">—</button><div class="cdd-list"></div></div>
+<select id="s_airframe" style="display:none" onchange="onAirframeChange()"></select>
+</div>
+<div class="card">
+<div class="card-title">Motor</div>
+<div class="cdd" id="d_motor"><button class="cdd-btn" onclick="toggleCdd('d_motor')">—</button><div class="cdd-list"></div></div>
+<select id="s_motor" style="display:none" onchange="onMotorChange()"></select>
+</div>
+<div class="card">
+<div class="card-title">Propeller</div>
+<div class="cdd" id="d_prop"><button class="cdd-btn" onclick="toggleCdd('d_prop')">—</button><div class="cdd-list"></div></div>
+<select id="s_prop" style="display:none" onchange="onPropChange()"></select>
+</div>
+<div class="card">
+<div class="card-title">Battery cell</div>
+<div class="cdd" id="d_cell"><button class="cdd-btn" onclick="toggleCdd('d_cell')">—</button><div class="cdd-list"></div></div>
+<select id="s_cell" style="display:none" onchange="onCellChange()"></select>
+</div>
+<div class="card">
+<div class="card-title">Battery capacity</div>
+<div class="cdd" id="d_bat"><button class="cdd-btn" onclick="toggleCdd('d_bat')">—</button><div class="cdd-list"></div></div>
+<select id="s_bat" style="display:none" onchange="calc()"></select>
+</div>
+</div>
+<div class="grid">
+<div>
+<div class="card">
+<div class="card-title">Parameters</div>
+<div class="sr"><div class="sl"><span>Airframe weight (frame+electronics)</span><span id="sv_fr">1380g</span></div><input type="range" id="s_fr" min="0" max="3500" value="1380" step="10" oninput="calc()"></div>
+<div class="sr"><div class="sl"><span>Payload</span><span id="sv_pl">0g</span></div><input type="range" id="s_pl" min="0" max="2000" value="0" step="50" oninput="calc()"></div>
+<div class="sr"><div class="sl"><span>Cruise speed</span><span id="sv_sp">65 km/h</span></div><input type="range" id="s_sp" min="45" max="100" value="65" step="1" oninput="calc()"></div>
+<div class="sr"><div class="sl"><span>Altitude (MSL)</span><span id="sv_alt">0 m</span></div><input type="range" id="s_alt" min="0" max="3000" value="0" step="100" oninput="calc()"></div>
+<div class="sr vtol-only"><div class="sl"><span>Hover time (takeoff+landing)</span><span id="sv_hov">90 s</span></div><input type="range" id="s_hov" min="30" max="600" value="90" step="10" oninput="calc()"></div>
+<div class="sr vtol-only"><div class="sl"><span>Transition time (2×)</span><span id="sv_tr">20 s</span></div><input type="range" id="s_tr" min="10" max="60" value="20" step="2" oninput="calc()"></div>
+<div class="sr"><div class="sl"><span>Avionics power draw</span><span id="sv_av">5 W</span></div><input type="range" id="s_av" min="0" max="30" value="5" step="1" oninput="calc()"></div>
+<div class="sr"><div class="sl"><span>Safety margin</span><span id="sv_mg">15%</span></div><input type="range" id="s_mg" min="5" max="30" value="15" step="1" oninput="calc()"></div>
+<div class="sr"><div class="sl"><span>Stall speed margin (×Vs)</span><span id="sv_sm">1.30</span></div><input type="range" id="s_sm" min="1.0" max="2.0" value="1.3" step="0.05" oninput="calc()"></div>
+</div>
+</div>
+<div>
+<div class="card">
+<div class="card-title">Weight budget <span style="text-transform:lowercase">(g)</span></div>
+<div class="row"><span class="lb">Airframe (frame+electronics)</span><span class="v" id="w_fr">1380</span></div>
+<div class="row"><span class="lb">Battery</span><span class="v hi" id="w_bt">—</span></div>
+<div class="row"><span class="lb">Payload</span><span class="v wa" id="w_pl">0</span></div>
+<div class="row dv"><span class="lb" style="font-weight:600">AUW</span><span class="v hi" id="w_auw" style="font-size:13px">—</span></div>
+</div>
+<div class="card" style="margin-top:10px">
+<div class="card-title">Power analysis</div>
+<div class="row"><span class="lb">Air density (ρ)</span><span class="v" id="r_rho">—</span></div>
+<div class="row"><span class="lb">Wing loading</span><span class="v" id="r_wl">—</span></div>
+<div class="row"><span class="lb">L/D ratio</span><span class="v" id="r_ld">—</span></div>
+<div class="row"><span class="lb">AoA (estimated)</span><span class="v" id="r_aoa">—</span></div>
+<div class="row"><span class="lb">Stall speed (Vs)</span><span class="v" id="r_vs">—</span></div>
+<div class="row"><span class="lb">Min safe cruise (Vs×<span id="r_smx">1.30</span>)</span><span class="v go" id="r_vmin">—</span></div>
+<div class="row"><span class="lb">Cruise power (+margin)</span><span class="v hi" id="r_pe">—</span></div>
+<div class="row"><span class="lb">Cruise current</span><span class="v hi" id="r_ca">—</span></div>
+<div class="row vtol-only"><span class="lb">Hover power (+margin)</span><span class="v wa" id="r_hp">—</span></div>
+<div class="row vtol-only"><span class="lb">Hover current</span><span class="v wa" id="r_ha">—</span></div>
+<div class="row vtol-only"><span class="lb">T/W ratio</span><span class="v" id="r_tw">—</span></div>
+<div class="row"><span class="lb">Max thrust/motor</span><span class="v pu" id="r_mt">—</span></div>
+</div>
+</div>
+<div class="full">
+<div class="mode-tabs">
+<div class="mtab active vtol-only-tab" onclick="setMode(0)">Hover + Cruise</div>
+<div class="mtab vtol-only-tab" onclick="setMode(1)">Hover Only</div>
+<div class="mtab" onclick="setMode(2)">Cruise Only</div>
+</div>
+<div class="mpan active" id="mp0">
+<div class="result-card vtol-only">
+<div class="big" id="rt0">—</div>
+<div class="sub">Total flight time (hover + transition + cruise)</div>
+<div class="pb" id="pb0"></div>
+<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--tx3)"><span id="pt_h">—</span><span id="pt_t">—</span><span id="pt_c">—</span></div>
+<div class="ga">
+<div class="gi"><div class="gv" id="g_rng">—</div><div class="gl">Range (km)</div></div>
+<div class="gi"><div class="gv" id="g_cr">—</div><div class="gl">Cruise time</div></div>
+<div class="gi"><div class="gv" id="g_wl">—</div><div class="gl">W/S (g/dm²)</div></div>
+<div class="gi vtol-only"><div class="gv" id="g_tw">—</div><div class="gl">T/W</div></div>
+<div class="gi"><div class="gv" id="g_vs">—</div><div class="gl">Stall (km/h)</div></div>
+<div class="gi"><div class="gv" id="g_eff">—</div><div class="gl">Wh/km</div></div>
+</div></div></div>
+<div class="mpan" id="mp1">
+<div class="result-card vtol-only">
+<div class="big" id="rt1">—</div>
+<div class="sub">Maximum hover endurance (usable energy)</div>
+<div class="ga">
+<div class="gi"><div class="gv" id="h_pw">—</div><div class="gl">Power (W)</div></div>
+<div class="gi"><div class="gv" id="h_am">—</div><div class="gl">Current (A)</div></div>
+<div class="gi"><div class="gv" id="h_thr">—</div><div class="gl">Throttle %</div></div>
+<div class="gi"><div class="gv" id="h_tw2">—</div><div class="gl">T/W</div></div>
+</div></div></div>
+<div class="mpan" id="mp2">
+<div class="result-card">
+<div class="big" id="rt2">—</div>
+<div class="sub">Maximum cruise endurance (hand launch, no hover)</div>
+<div class="ga">
+<div class="gi"><div class="gv" id="c_rng">—</div><div class="gl">Range (km)</div></div>
+<div class="gi"><div class="gv" id="c_pw">—</div><div class="gl">Power (W)</div></div>
+<div class="gi"><div class="gv" id="c_am">—</div><div class="gl">Current (A)</div></div>
+<div class="gi"><div class="gv" id="c_eff2">—</div><div class="gl">Wh/km</div></div>
+</div></div></div>
+</div>
+<div class="full">
+<div class="card">
+<div class="card-title" id="chart_title">Aerodynamic operating point</div>
+<canvas id="aeroChart" height="280"></canvas>
+<div class="aero-info">
+<div class="ai"><div class="av" id="a_cl">—</div><div class="al">CL (required)</div></div>
+<div class="ai"><div class="av" id="a_cd">—</div><div class="al">CD (total)</div></div>
+<div class="ai"><div class="av" id="a_aoa">—</div><div class="al">AoA (°)</div></div>
+<div class="ai"><div class="av" id="a_ld">—</div><div class="al">L/D</div></div>
+<div class="ai"><div class="av" id="a_re">—</div><div class="al">Re (×10³)</div></div>
+<div class="ai"><div class="av" id="a_vmin">—</div><div class="al">Min cruise (km/h)</div></div>
+</div>
+<div class="warn" id="w1">⚠ AUW exceeds design limit — structural risk!</div>
+<div class="warn vtol-only" id="w2">⚠ T/W too low — hover is unsafe! Reduce payload or use higher-thrust propeller.</div>
+<div class="warn" id="w3a">⚠ Wing loading exceeds design range and cruise speed is below safe minimum! Increase cruise speed to at least <span id="w3a_spd"></span> km/h or reduce AUW.</div>
+<div class="warn yellow" id="w3b">⚠ Wing loading above design range (<span id="w3b_wl"></span> g/dm²), but cruise speed is adequate. Expect higher stall speed (<span id="w3b_vs"></span> km/h) and reduced maneuverability.</div>
+<div class="warn" id="w4">⚠ Cruise speed is too close to stall! Increase speed or reduce AUW.</div>
+</div>
+</div>
+<div class="full">
+<div class="note" id="note_text">
+</div>
+</div>
+</div><!-- grid -->
+</div><!-- /appWrap -->
+</div>
+<script src="config/manifest.js"></script>
+<script>
+// === MENU ===
+function toggleMenu(){$('menuDrop').classList.toggle('open');}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.hdr-menu')) $('menuDrop').classList.remove('open');
+});
+
+function exportPDF(){
+  $('menuDrop').classList.remove('open');
+  const af=curAirframe, mt=curMotor;
+  const vtol=isVTOL();
+  // Redraw chart in light theme for PDF
+  _lightChart=true; calc();
+  const chartImg=document.getElementById('aeroChart').toDataURL('image/png');
+  _lightChart=false; calc();
+  const date=new Date().toLocaleString();
+
+  // Collect selections
+  const selAf=$('d_airframe').querySelector('.cdd-btn').textContent;
+  const selMt=$('d_motor').querySelector('.cdd-btn').textContent;
+  const selPr=$('d_prop').querySelector('.cdd-btn').textContent;
+  const selCl=$('d_cell').querySelector('.cdd-btn').textContent;
+  const selBt=$('d_bat').querySelector('.cdd-btn').textContent;
+
+  // Collect parameters
+  const params=[
+    ['Airframe weight',$('sv_fr').textContent],
+    ['Payload',$('sv_pl').textContent],
+    ['Cruise speed',$('sv_sp').textContent],
+    ['Altitude',$('sv_alt').textContent],
+  ];
+  if(vtol){
+    params.push(['Hover time',$('sv_hov').textContent]);
+    params.push(['Transition time',$('sv_tr').textContent]);
+  }
+  params.push(['Avionics power',$('sv_av').textContent]);
+  params.push(['Safety margin',$('sv_mg').textContent]);
+  params.push(['Stall margin',$('sv_sm').textContent]);
+
+  // Weight budget
+  const weight=[
+    ['Airframe',$('w_fr').textContent+'g'],
+    ['Battery',$('w_bt').textContent],
+    ['Payload',$('w_pl').textContent+'g'],
+    ['AUW',$('w_auw').textContent],
+  ];
+
+  // Power analysis
+  const power=[
+    ['Air density (ρ)',$('r_rho').textContent],
+    ['Wing loading',$('r_wl').textContent],
+    ['L/D ratio',$('r_ld').textContent],
+    ['AoA',$('r_aoa').textContent],
+    ['Stall speed (Vs)',$('r_vs').textContent],
+    ['Min safe cruise',$('r_vmin').textContent],
+    ['Cruise power',$('r_pe').textContent],
+    ['Cruise current',$('r_ca').textContent],
+  ];
+  if(vtol){
+    power.push(['Hover power',$('r_hp').textContent]);
+    power.push(['Hover current',$('r_ha').textContent]);
+    power.push(['T/W ratio',$('r_tw').textContent]);
+  }
+  power.push(['Max thrust/motor',$('r_mt').textContent]);
+
+  // Flight results — active mode
+  let flightTitle='', flightBig='', flightSub='', flightStats=[];
+  const activeTab=document.querySelector('.mtab.active');
+  const activeMode=activeTab?activeTab.textContent:'';
+  const mp0=$('mp0'), mp1=$('mp1'), mp2=$('mp2');
+  if(mp0.classList.contains('active')&&vtol){
+    flightTitle='Hover + Cruise';
+    flightBig=$('rt0').textContent;
+    flightSub='Total flight time';
+    flightStats=[['Range',$('g_rng').textContent],['Cruise time',$('g_cr').textContent],['W/S',$('g_wl').textContent],['T/W',$('g_tw').textContent],['Stall',$('g_vs').textContent],['Wh/km',$('g_eff').textContent]];
+  } else if(mp1.classList.contains('active')&&vtol){
+    flightTitle='Hover Only';
+    flightBig=$('rt1').textContent;
+    flightSub='Maximum hover endurance';
+    flightStats=[['Power',$('h_pw').textContent],['Current',$('h_am').textContent],['Throttle',$('h_thr').textContent],['T/W',$('h_tw2').textContent]];
+  } else {
+    flightTitle='Cruise Only';
+    flightBig=$('rt2').textContent;
+    flightSub='Maximum cruise endurance';
+    flightStats=[['Range',$('c_rng').textContent],['Power',$('c_pw').textContent],['Current',$('c_am').textContent],['Wh/km',$('c_eff2').textContent]];
+  }
+
+  // Aero info
+  const aero=[
+    ['CL',$('a_cl').textContent],['CD',$('a_cd').textContent],
+    ['AoA',$('a_aoa').textContent],['L/D',$('a_ld').textContent],
+    ['Re',$('a_re').textContent],['Min cruise',$('a_vmin').textContent],
+  ];
+
+  // Warnings
+  const warns=[];
+  ['w1','w2','w3a','w3b','w4'].forEach(id=>{
+    const el=$(id);
+    if(el&&el.style.display!=='none'&&el.offsetParent!==null) warns.push(el.textContent);
+  });
+
+  // Build HTML
+  const tblRow=(rows)=>rows.map(r=>'<tr><td style="padding:3px 8px;color:#666">'+r[0]+'</td><td style="padding:3px 8px;font-weight:500;text-align:right">'+r[1]+'</td></tr>').join('');
+  const tbl=(title,rows)=>'<h3 style="margin:14px 0 6px;font-size:13px;color:#333;border-bottom:1px solid #ddd;padding-bottom:4px">'+title+'</h3><table style="width:100%;border-collapse:collapse;font-size:12px">'+tblRow(rows)+'</table>';
+
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${af.name} — Flight Report</title>
+<style>
+@media print{@page{margin:15mm 12mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+body{font-family:Arial,Helvetica,sans-serif;color:#222;max-width:700px;margin:0 auto;padding:20px;font-size:12px}
+h1{font-size:18px;margin:0}h2{font-size:15px;margin:18px 0 4px;color:#1a73e8}
+.sub{color:#888;font-size:11px;margin:4px 0 16px}
+.cols{display:flex;gap:20px}.col{flex:1}
+.big-result{text-align:center;background:#f0f7ff;border-radius:8px;padding:14px;margin:10px 0}
+.big-result .num{font-size:28px;font-weight:700;color:#1a73e8}
+.big-result .label{font-size:11px;color:#666;margin-top:2px}
+.stats{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
+.stat{background:#f5f5f5;border-radius:6px;padding:6px 10px;text-align:center;min-width:70px}
+.stat .sv{font-size:14px;font-weight:600}.stat .sl{font-size:9px;color:#888}
+.warn{background:#fff3f3;border:1px solid #fcc;border-radius:6px;padding:6px 10px;font-size:11px;color:#c00;margin:4px 0}
+.warn.yw{background:#fffbe6;border-color:#eed;color:#a67c00}
+img{width:100%;border-radius:6px;margin:8px 0}
+.footer{margin-top:20px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#aaa;text-align:center}
+</style></head><body>`;
+
+  html+=`<h1>${af.name}</h1>`;
+  html+=`<div class="sub">${af.description||''} · ${af.airfoilName||''} · ${date}</div>`;
+
+  // Configuration
+  html+=`<h2>Configuration</h2>`;
+  html+=tbl('',[ ['Airframe',selAf],['Motor',selMt],['Propeller',selPr],['Battery',selCl+' / '+selBt] ]);
+
+  // Flight result
+  html+=`<h2>Flight Time — ${flightTitle}</h2>`;
+  html+=`<div class="big-result"><div class="num">${flightBig}</div><div class="label">${flightSub}</div>`;
+  html+=`<div class="stats">${flightStats.map(s=>'<div class="stat"><div class="sv">'+s[1]+'</div><div class="sl">'+s[0]+'</div></div>').join('')}</div></div>`;
+
+  // Two columns: Parameters + Weight/Power
+  html+=`<div class="cols"><div class="col">`;
+  html+=tbl('Parameters',params);
+  html+=`</div><div class="col">`;
+  html+=tbl('Weight Budget',weight);
+  html+=tbl('Power Analysis',power);
+  html+=`</div></div>`;
+
+  // Warnings
+  if(warns.length){
+    html+=`<h2>Warnings</h2>`;
+    warns.forEach(w=>html+=`<div class="warn${w.includes('above design range')?' yw':''}">${w}</div>`);
+  }
+
+  // Aero chart
+  html+=`<h2>Aerodynamic Operating Point</h2>`;
+  html+=`<img src="${chartImg}" alt="Aero chart">`;
+  html+=`<div class="stats">${aero.map(a=>'<div class="stat"><div class="sv">'+a[1]+'</div><div class="sl">'+a[0]+'</div></div>').join('')}</div>`;
+
+  html+=`<div class="footer">Generated by Flight Calculator · ${af.name} · ${date}</div>`;
+  html+=`</body></html>`;
+
+  const w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  w.onload=function(){w.print();};
+}
+
+function editConfig(type){
+  $('menuDrop').classList.remove('open');
+  let data=null, tab=0;
+  if(type==='airframe'){
+    const af=CFG.airframes[+$('s_airframe').value];
+    if(!af) return;
+    data=af; tab=0;
+  } else if(type==='motor'){
+    const mt=CFG.motors[+$('s_motor').value];
+    if(!mt) return;
+    data=mt; tab=1;
+  } else if(type==='prop'){
+    const pr=CFG.props.find(p=>p.id===$('s_prop').value);
+    if(!pr) return;
+    data=pr; tab=2;
+  } else if(type==='battery'){
+    const bt=batByCells(curCells);
+    if(!bt) return;
+    data=bt; tab=3;
+  }
+  sessionStorage.setItem('editConfig',JSON.stringify({type:type,tab:tab,data:data,allProps:CFG.props.map(p=>p.id)}));
+  window.location.href='Config.html?edit='+type;
+}
+
+// === CONFIG LOADER ===
+function loadScript(src){
+  return new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src=src;s.onload=resolve;
+    s.onerror=()=>reject(new Error('Failed to load: '+src));
+    document.head.appendChild(s);
+  });
+}
+
+async function boot(){
+  try{
+    if(typeof CFG==='undefined'||typeof CFG_FILES==='undefined') throw new Error('manifest.js not loaded');
+    for(const f of CFG_FILES) await loadScript(f);
+    CFG.batteries.sort((a,b)=>a.cells-b.cells);
+    if(!CFG.airframes.length) throw new Error('No airframe configs found');
+    if(!CFG.motors.length||!CFG.batteries.length||!CFG.props.length) throw new Error('No motor/battery/prop configs found');
+    document.getElementById('appWrap').style.display='block';
+    initApp();
+  }catch(e){
+    document.getElementById('loadErr').style.display='block';
+    document.getElementById('loadErrDetail').textContent=e.message;
+  }
+}
+
+// === CURRENT SELECTION STATE ===
+let curAirframe=null, curMotor=null, curCells=0, curPropId='', curBatIdx=0;
+
+// === HELPERS ===
+function $(id){return document.getElementById(id);}
+function propById(id){return CFG.props.find(p=>p.id===id);}
+function batByCells(c){return CFG.batteries.find(b=>b.cells===c);}
+function getMotorPropData(){
+  if(!curMotor||!curMotor.propData[curCells]) return null;
+  return curMotor.propData[curCells][curPropId]||null;
+}
+function isVTOL(){return curAirframe&&curAirframe.type==='vtol';}
+
+// === CUSTOM DROPDOWN ===
+function toggleCdd(id){
+  const list=$(id).querySelector('.cdd-list');
+  const wasOpen=list.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.cdd-list.open').forEach(l=>l.classList.remove('open'));
+  if(!wasOpen) list.classList.add('open');
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.cdd')) document.querySelectorAll('.cdd-list.open').forEach(l=>l.classList.remove('open'));
+});
+
+function syncCdd(cddId,selId){
+  const sel=$(selId), cdd=$(cddId);
+  const btn=cdd.querySelector('.cdd-btn');
+  const list=cdd.querySelector('.cdd-list');
+  list.innerHTML='';
+  Array.from(sel.options).forEach(opt=>{
+    const item=document.createElement('div');
+    item.className='cdd-item'+(opt.value===sel.value?' active':'');
+    item.textContent=opt.textContent;
+    item.dataset.val=opt.value;
+    item.onclick=function(){
+      sel.value=this.dataset.val;
+      sel.dispatchEvent(new Event('change'));
+      list.classList.remove('open');
+      syncCddActive(cddId,selId);
+    };
+    list.appendChild(item);
+  });
+  const cur=sel.options[sel.selectedIndex];
+  btn.textContent=cur?cur.textContent:'—';
+}
+
+function syncCddActive(cddId,selId){
+  const sel=$(selId), cdd=$(cddId);
+  const btn=cdd.querySelector('.cdd-btn');
+  const cur=sel.options[sel.selectedIndex];
+  btn.textContent=cur?cur.textContent:'—';
+  cdd.querySelectorAll('.cdd-item').forEach(item=>{
+    item.classList.toggle('active',item.dataset.val===sel.value);
+  });
+}
+
+// === UI BUILDERS ===
+function buildAirframeSelect(){
+  const sel=$('s_airframe');sel.innerHTML='';
+  CFG.airframes.forEach((af,i)=>{
+    const o=document.createElement('option');o.value=i;
+    o.textContent=af.name+(af.description?' — '+af.description:'');
+    sel.appendChild(o);
+  });
+  sel.value=0;
+  syncCdd('d_airframe','s_airframe');
+}
+
+function buildMotorSelect(){
+  const sel=$('s_motor');sel.innerHTML='';
+  const prev=curMotor?curMotor.id:null;
+  let foundPrev=false;
+  CFG.motors.forEach((m,i)=>{
+    if(curAirframe.compatMotors.length&&!curAirframe.compatMotors.includes(m.id)) return;
+    const o=document.createElement('option');o.value=i;
+    o.textContent=m.name+' '+m.kv+'KV ('+m.cells.map(c=>c+'S').join('/')+')';
+    sel.appendChild(o);
+    if(m.id===prev) {sel.value=i;foundPrev=true;}
+  });
+  if(!foundPrev){
+    const defIdx=CFG.motors.findIndex(m=>m.id==='t-motor-f90');
+    if(defIdx>=0&&sel.querySelector('option[value="'+defIdx+'"]')) sel.value=defIdx;
+  }
+  syncCdd('d_motor','s_motor');
+}
+
+function buildCellSelect(){
+  const sel=$('s_cell');sel.innerHTML='';
+  const prevCells=curCells;
+  curMotor.cells.forEach(c=>{
+    if(curAirframe.compatBatteries.length&&!curAirframe.compatBatteries.includes(c)) return;
+    const b=batByCells(c);if(!b) return;
+    const o=document.createElement('option');o.value=c;
+    o.textContent=c+'S — '+b.voltage.toFixed(1)+'V';
+    sel.appendChild(o);
+  });
+  if(curMotor.cells.includes(prevCells)){sel.value=prevCells;}
+  else{sel.value=curMotor.defaultCells||curMotor.cells[curMotor.cells.length-1];}
+  curCells=+sel.value;
+  syncCdd('d_cell','s_cell');
+}
+
+function buildPropSelect(){
+  const sel=$('s_prop');sel.innerHTML='';
+  const prevId=curPropId;
+  const pd=curMotor.propData[curCells]||{};
+  let foundPrev=false;
+  CFG.props.forEach(p=>{
+    if(!pd[p.id]) return;
+    // Compatibility filter
+    if(curAirframe.compatProps.length&&!curAirframe.compatProps.includes(p.id)) return;
+    const d=pd[p.id];
+    const o=document.createElement('option');o.value=p.id;
+    o.textContent=p.name+' — '+p.info+' · ~'+d.thrust+'g/mot';
+    sel.appendChild(o);
+    if(p.id===prevId) foundPrev=true;
+  });
+  if(foundPrev){sel.value=prevId;}
+  curPropId=sel.value;
+  syncCdd('d_prop','s_prop');
+}
+
+function buildBatCapSelect(){
+  const sel=$('s_bat');
+  const prev=+sel.value||0;
+  sel.innerHTML='';
+  const b=batByCells(curCells);if(!b) return;
+  b.options.forEach((opt,i)=>{
+    const o=document.createElement('option');o.value=i;
+    o.textContent=opt.mah+'mAh — ~'+opt.weight+'g';
+    sel.appendChild(o);
+  });
+  sel.value=Math.min(prev,b.options.length-1);
+  curBatIdx=+sel.value;
+  syncCdd('d_bat','s_bat');
+}
+
+// === VTOL/FIXED VISIBILITY ===
+function updateVTOLVisibility(){
+  const vtol=isVTOL();
+  document.querySelectorAll('.vtol-only').forEach(el=>{
+    el.style.display=vtol?'':'none';
+  });
+  document.querySelectorAll('.vtol-only-tab').forEach(el=>{
+    el.style.display=vtol?'':'none';
+  });
+  // If fixed-wing and mode 0 or 1, switch to mode 2
+  if(!vtol){setMode(2);}
+}
+
+// === EVENT HANDLERS ===
+function onAirframeChange(){
+  curAirframe=CFG.airframes[+$('s_airframe').value];
+  // Update header
+  $('hdr_name').textContent=curAirframe.name;
+  $('hdr_sub').textContent=(curAirframe.description||'')+(curAirframe.airfoilName?' · '+curAirframe.airfoilName:'')+' · v3.0';
+  // Update chart title
+  $('chart_title').textContent='Aerodynamic operating point'+(curAirframe.airfoilName?' — '+curAirframe.airfoilName:'');
+  // Set default frame weight
+  $('s_fr').value=curAirframe.defaultFrameWeight;
+  // Update note
+  updateNote();
+  // Update visibility
+  updateVTOLVisibility();
+  // Rebuild dependent selects with compatibility filtering
+  buildMotorSelect();
+  curMotor=CFG.motors[+$('s_motor').value];
+  buildCellSelect();buildPropSelect();buildBatCapSelect();
+  calc();
+}
+
+function onMotorChange(){
+  curMotor=CFG.motors[+$('s_motor').value];
+  buildCellSelect();buildPropSelect();buildBatCapSelect();calc();
+}
+function onCellChange(){
+  curCells=+$('s_cell').value;
+  buildPropSelect();buildBatCapSelect();calc();
+}
+function onPropChange(){
+  curPropId=$('s_prop').value;calc();
+}
+function setMode(i){document.querySelectorAll('.mtab').forEach((t,j)=>t.classList.toggle('active',j===i));document.querySelectorAll('.mpan').forEach((p,j)=>p.classList.toggle('active',j===i));}
+
+// === PHYSICS ===
+function rhoA(a){return 1.225*Math.pow(1-2.26e-5*a,4.256);}
+function interp(arr,cl){for(let i=0;i<arr.length-1;i++){if(cl>=arr[i][1]&&cl<=arr[i+1][1]){if(arr[i+1][1]===arr[i][1])return{aoa:arr[i][0],cdp:arr[i][2]};const t=(cl-arr[i][1])/(arr[i+1][1]-arr[i][1]);return{aoa:arr[i][0]+t*(arr[i+1][0]-arr[i][0]),cdp:arr[i][2]+t*(arr[i+1][2]-arr[i][2])};}}if(cl<arr[0][1])return{aoa:arr[0][0],cdp:arr[0][2]};return{aoa:arr[arr.length-1][0],cdp:arr[arr.length-1][2]};}
+
+function aeroCalc(af,m,v,r){
+  const q=.5*r*v*v;
+  const CL=m*9.81/(q*af.wingArea);
+  const Re=r*v*af.mac/1.81e-5;
+  const p=interp(af.airfoilPolar,CL);
+  const CD0=p.cdp+af.cd0Penalty;
+  const CDi=CL*CL/(Math.PI*af.aspectRatio*af.oswaldEff);
+  const CD=CD0+CDi;
+  const LD=CL>0?CL/CD:1;
+  return{CL,CD,aoa:p.aoa,LD,Re};
+}
+function stallV(af,m,r){return Math.sqrt(2*m*9.81/(r*af.wingArea*af.clMax));}
+function hovP(af,m,r,dia,hE){const T=m*9.81;const A=Math.PI*(dia/2)**2;return T*Math.sqrt(T/(2*r*af.numMotors*A))/hE;}
+function fmt(n){const m=Math.floor(n),s=Math.round((n-m)*60);return m+'m '+s+'s';}
+
+// === CHART ===
+let _lightChart=false;
+function _cc(dark,light){return _lightChart?light:dark;}
+
+function drawChart(af,LD_op,vMs,m,r,smVal){
+  const cv=$('aeroChart');const dpr=window.devicePixelRatio||1;
+  const w=cv.clientWidth,h=cv.clientHeight;cv.width=w*dpr;cv.height=h*dpr;
+  const c=cv.getContext('2d');c.scale(dpr,dpr);
+  c.fillStyle=_cc('#0e1118','#ffffff');c.fillRect(0,0,w,h);
+  const ml=55,mr=55,mt=25,mb=35,pw=w-ml-mr,ph=h-mt-mb;
+  const speeds=[],lds=[],cls=[];
+  const clCeil=af.clMax+0.1;
+  for(let s=30;s<=110;s++){const vv=s/3.6;const a=aeroCalc(af,m,vv,r);speeds.push(s);lds.push(a.LD>0&&a.CL<clCeil?a.LD:0);cls.push(a.CL);}
+  const maxLD=Math.max(...lds.filter(x=>x>0))*1.1,maxCL=clCeil+0.1;
+  c.strokeStyle=_cc('#1e2535','#e0e0e0');c.lineWidth=.5;
+  for(let i=0;i<=5;i++){const y=mt+ph*(1-i/5);c.beginPath();c.moveTo(ml,y);c.lineTo(ml+pw,y);c.stroke();c.fillStyle=_cc('#6b7280','#888');c.font='9px JetBrains Mono';c.textAlign='right';c.fillText((maxLD*i/5).toFixed(0),ml-6,y+3);}
+  for(let s=30;s<=110;s+=10){const x=ml+(s-30)/80*pw;c.beginPath();c.moveTo(x,mt);c.lineTo(x,mt+ph);c.stroke();c.fillStyle=_cc('#6b7280','#888');c.font='9px JetBrains Mono';c.textAlign='center';c.fillText(s,x,mt+ph+12);}
+  c.save();c.translate(12,mt+ph/2);c.rotate(-Math.PI/2);c.fillStyle=_cc('#9ca3b8','#555');c.font='10px DM Sans';c.textAlign='center';c.fillText('L/D',0,0);c.restore();
+  c.fillStyle=_cc('#9ca3b8','#555');c.font='10px DM Sans';c.textAlign='center';c.fillText('Speed (km/h)',ml+pw/2,h-4);
+  c.beginPath();c.strokeStyle=_cc('#38bdf8','#1a73e8');c.lineWidth=2;let st=false;
+  for(let i=0;i<speeds.length;i++){if(lds[i]<=0)continue;const x=ml+(speeds[i]-30)/80*pw,y=mt+ph*(1-lds[i]/maxLD);if(!st){c.moveTo(x,y);st=true;}else c.lineTo(x,y);}c.stroke();
+  c.beginPath();c.strokeStyle=_cc('#a78bfa','#7c3aed');c.lineWidth=1.5;c.setLineDash([4,3]);st=false;
+  for(let i=0;i<speeds.length;i++){if(cls[i]>maxCL||cls[i]<0)continue;const x=ml+(speeds[i]-30)/80*pw,y=mt+ph*(1-cls[i]/maxCL);if(!st){c.moveTo(x,y);st=true;}else c.lineTo(x,y);}c.stroke();c.setLineDash([]);
+  for(let i=0;i<=5;i++){const y=mt+ph*(1-i/5);c.fillStyle=_cc('#a78bfa','#7c3aed');c.font='9px JetBrains Mono';c.textAlign='left';c.fillText((maxCL*i/5).toFixed(1),ml+pw+6,y+3);}
+  c.save();c.translate(w-6,mt+ph/2);c.rotate(Math.PI/2);c.fillStyle=_cc('#a78bfa','#7c3aed');c.font='10px DM Sans';c.textAlign='center';c.fillText('CL',0,0);c.restore();
+  const vsK=stallV(af,m,r)*3.6;
+  if(vsK>=30&&vsK<=110){const sx=ml+(vsK-30)/80*pw;c.beginPath();c.strokeStyle=_cc('#f87171','#dc2626');c.lineWidth=1;c.setLineDash([3,3]);c.moveTo(sx,mt);c.lineTo(sx,mt+ph);c.stroke();c.setLineDash([]);c.fillStyle=_cc('#f87171','#dc2626');c.font='9px DM Sans';c.fillText('Stall',sx+3,mt+10);}
+  const vmK=vsK*smVal;
+  if(vmK>=30&&vmK<=110){const mx=ml+(vmK-30)/80*pw;c.beginPath();c.strokeStyle=_cc('#fbbf24','#d97706');c.lineWidth=1;c.setLineDash([3,3]);c.moveTo(mx,mt);c.lineTo(mx,mt+ph);c.stroke();c.setLineDash([]);c.fillStyle=_cc('#fbbf24','#d97706');c.font='9px DM Sans';c.fillText('Min safe (\u00d7'+smVal.toFixed(2)+')',mx+3,mt+22);}
+  const opS=vMs*3.6;
+  if(opS>=30&&opS<=110&&LD_op>0){const ox=ml+(opS-30)/80*pw,oy=mt+ph*(1-LD_op/maxLD);c.beginPath();c.arc(ox,oy,6,0,Math.PI*2);c.fillStyle=_cc('#34d399','#059669');c.fill();c.beginPath();c.arc(ox,oy,9,0,Math.PI*2);c.strokeStyle=_cc('#34d399','#059669');c.lineWidth=1.5;c.stroke();c.fillStyle=_cc('#34d399','#059669');c.font='bold 10px DM Sans';c.textAlign='left';c.fillText('\u25cf '+opS.toFixed(0)+' km/h',ox+12,oy-4);c.fillText('L/D='+LD_op.toFixed(1),ox+12,oy+8);}
+  c.fillStyle=_cc('#38bdf8','#1a73e8');c.font='10px DM Sans';c.textAlign='left';c.fillRect(ml+8,mt+6,12,2);c.fillText('L/D',ml+24,mt+10);
+  c.strokeStyle=_cc('#a78bfa','#7c3aed');c.lineWidth=1.5;c.setLineDash([4,3]);c.beginPath();c.moveTo(ml+8,mt+22);c.lineTo(ml+20,mt+22);c.stroke();c.setLineDash([]);c.fillStyle=_cc('#a78bfa','#7c3aed');c.fillText('CL',ml+24,mt+25);
+}
+
+// === NOTE ===
+function updateNote(){
+  const af=curAirframe;
+  const vtol=isVTOL();
+  let txt='<strong>Calculation model:</strong> ';
+  txt+=af.airfoilName+' polar (XFOIL), Re-interpolated. AR='+af.aspectRatio+', Oswald e='+af.oswaldEff+'. ';
+  txt+='3D-print surface: CD0+'+af.cd0Penalty+'. ';
+  if(vtol) txt+='Hover: momentum theory ('+af.numMotors+' motors). Cruise: '+af.numCruiseMotors+' front motors. ';
+  txt+='ISA atmo. LiPo '+(af.usableBattery*100).toFixed(0)+'% usable.<br>';
+  txt+='<strong>Safety margin</strong> applies to both '+(vtol?'hover and ':'')+'cruise power — affects all energy consumption, flight time, range, and current readings.<br>';
+  txt+='<strong>Stall margin (×Vs)</strong> sets the minimum safe cruise speed relative to stall speed. 1.3=FAR Part 23. Lower=aggressive, higher=conservative.<br>';
+  txt+='<strong>Configs:</strong> Motor, battery, and propeller data loaded from <code>config/</code> folder. Add new .js files and register in <code>config/manifest.js</code>.<br>';
+  txt+='<strong>Source:</strong> '+af.name+' configuration.';
+  $('note_text').innerHTML=txt;
+}
+
+// === MAIN CALCULATION ===
+function calc(){
+  const af=curAirframe;if(!af) return;
+  const pr=getMotorPropData();if(!pr) return;
+  const prop=propById(curPropId);if(!prop) return;
+  const batCfg=batByCells(curCells);if(!batCfg) return;
+  const bat=batCfg.options[+$('s_bat').value]||batCfg.options[0];
+  const BV=batCfg.voltage;
+  const vtol=isVTOL();
+
+  const fr=+$('s_fr').value, pl=+$('s_pl').value;
+  const sp=+$('s_sp').value, alt=+$('s_alt').value;
+  const hov=vtol?+$('s_hov').value:0, tr=vtol?+$('s_tr').value:0;
+  const av=+$('s_av').value;
+  const mg=+$('s_mg').value, sm=+$('s_sm').value;
+
+  $('sv_fr').textContent=fr+'g';
+  $('sv_pl').textContent=pl+'g';
+  $('sv_sp').textContent=sp+' km/h';
+  $('sv_alt').textContent=alt+' m';
+  if(vtol){
+    $('sv_hov').textContent=hov+' s';
+    $('sv_tr').textContent=tr+' s';
+  }
+  $('sv_av').textContent=av+' W';
+  $('sv_mg').textContent=mg+'%';
+  $('sv_sm').textContent=sm.toFixed(2);
+
+  const bWh=bat.mah/1e3*BV, usable=bWh*af.usableBattery;
+  const auw=fr+bat.weight+pl, m=auw/1e3;
+  const r=rhoA(alt), v=sp/3.6;
+  const aero=aeroCalc(af,m,v,r);
+  const vs=stallV(af,m,r), vsK=vs*3.6, vmK=vsK*sm, wl=auw/af.wingAreaDm2;
+  const tw=pr.thrust*af.numMotors/auw;
+  // Cruise — motor power + avionics + safety margin
+  const drag=m*9.81/aero.LD, mechW=drag*v;
+  const elecW=mechW/pr.cruiseEff+av, elecWm=elecW*(1+mg/100), crA=elecWm/BV;
+  // Hover — motor power + avionics + safety margin
+  const hW=vtol?hovP(af,m,r,prop.diameter,pr.hoverEff)+av:0;
+  const hWm=hW*(1+mg/100), hA=hWm/BV;
+  const hovThr=vtol?auw/(pr.thrust*af.numMotors)*100:0;
+
+  $('w_fr').textContent=fr;
+  $('w_bt').textContent=bat.weight;
+  $('w_pl').textContent=pl;
+  $('w_auw').textContent=auw;
+  $('r_rho').textContent=r.toFixed(3);
+  $('r_wl').textContent=wl.toFixed(1)+' g/dm\u00b2';
+  $('r_wl').className='v '+(wl>af.wlDanger?'ba':wl>af.wlCaution?'wa':'go');
+  $('r_ld').textContent=aero.LD.toFixed(1);
+  $('r_aoa').textContent=aero.aoa.toFixed(1)+'\u00b0';
+  $('r_vs').textContent=vsK.toFixed(1)+' km/h';
+  $('r_smx').textContent=sm.toFixed(2);
+  $('r_vmin').textContent=vmK.toFixed(0)+' km/h';
+  $('r_vmin').style.color=sp>=vmK?'var(--grn)':'var(--red)';
+  $('r_pe').textContent=elecWm.toFixed(0)+' W';
+  $('r_ca').textContent=crA.toFixed(1)+' A';
+  if(vtol){
+    $('r_hp').textContent=hWm.toFixed(0)+' W';
+    $('r_ha').textContent=hA.toFixed(1)+' A';
+    $('r_tw').textContent=tw.toFixed(2);
+    $('r_tw').className='v '+(tw>=af.twGood?'go':tw>=af.twMin?'wa':'ba');
+  }
+  $('r_mt').textContent=pr.thrust+'g';
+
+  $('a_cl').textContent=aero.CL.toFixed(2);
+  $('a_cl').style.color=aero.CL>af.clMax?'var(--red)':aero.CL>.8?'var(--ylw)':'var(--grn)';
+  $('a_cd').textContent=aero.CD.toFixed(4);
+  $('a_aoa').textContent=aero.aoa.toFixed(1)+'\u00b0';
+  $('a_aoa').style.color=aero.aoa>8?'var(--red)':aero.aoa>5?'var(--ylw)':'var(--grn)';
+  $('a_ld').textContent=aero.LD.toFixed(1);
+  $('a_ld').style.color=aero.LD>9?'var(--grn)':aero.LD>6?'var(--ylw)':'var(--red)';
+  $('a_re').textContent=(aero.Re/1e3).toFixed(0)+'k';
+  $('a_vmin').textContent=vmK.toFixed(0);
+  $('a_vmin').style.color=sp>=vmK?'var(--grn)':'var(--red)';
+
+  drawChart(af,aero.LD,v,m,r,sm);
+
+  // === WARNINGS ===
+  $('w1').style.display=auw>af.auwMax?'block':'none';
+  if(vtol) $('w2').style.display=tw<af.twMin?'block':'none';
+  const wlH=wl>af.wlDanger, spOk=sp>=vmK;
+  if(wlH&&!spOk){$('w3a').style.display='block';$('w3a_spd').textContent=vmK.toFixed(0);$('w3b').style.display='none';}
+  else if(wlH&&spOk){$('w3a').style.display='none';$('w3b').style.display='block';$('w3b_wl').textContent=wl.toFixed(0);$('w3b_vs').textContent=vsK.toFixed(0);}
+  else{$('w3a').style.display='none';$('w3b').style.display='none';}
+  $('w4').style.display=(!wlH&&sp<vmK)?'block':'none';
+
+  // === MODE 0 (Hover + Cruise) ===
+  if(vtol){
+    const trW=(hWm+elecWm)/2*af.transitionMult, hWh=hWm*hov/3600, tWh=trW*tr/3600, rem=usable-hWh-tWh;
+    let cS=0,tM=0,rng=0;if(rem>0){cS=rem/elecWm*3600;tM=(hov+tr+cS)/60;rng=cS*v/1e3;}
+    const e0=$('rt0');
+    if(rem<=0){e0.textContent='Insufficient energy';e0.className='big ba';}
+    else{e0.textContent=fmt(tM);e0.className='big '+(tM>30?'go':tM>20?'hi':'wa');}
+    $('g_rng').textContent=rng>0?rng.toFixed(1):'\u2014';
+    $('g_rng').style.color=rng>30?'var(--grn)':rng>15?'var(--ylw)':'var(--red)';
+    $('g_cr').textContent=cS>0?(cS/60).toFixed(1)+'m':'\u2014';
+    $('g_wl').textContent=wl.toFixed(0);
+    $('g_wl').style.color=wl>af.wlDanger?'var(--red)':wl>af.wlCaution?'var(--ylw)':'var(--grn)';
+    $('g_tw').textContent=tw.toFixed(2);
+    $('g_tw').style.color=tw>=af.twGood?'var(--grn)':tw>=af.twMin?'var(--ylw)':'var(--red)';
+    $('g_vs').textContent=vsK.toFixed(0);
+    const whkm=rng>0?usable/rng:0;$('g_eff').textContent=whkm>0?whkm.toFixed(1):'\u2014';
+    const tS=hov+tr+(cS>0?cS:0);
+    if(tS>0&&rem>0){const hp=hov/tS*100,tp=tr/tS*100,cp=cS/tS*100;
+      $('pb0').innerHTML='<div class="ph p-h" style="width:'+Math.max(hp,3)+'%">'+hov+'s</div><div class="ph p-t" style="width:'+Math.max(tp,3)+'%">'+tr+'s</div><div class="ph p-c" style="width:'+Math.max(cp,3)+'%">'+(cS/60).toFixed(1)+'m</div>';
+      $('pt_h').textContent='Hover:'+hov+'s \u00b7 '+hWm.toFixed(0)+'W';
+      $('pt_t').textContent='Trans:'+tr+'s \u00b7 '+trW.toFixed(0)+'W';
+      $('pt_c').textContent='Cruise:'+(cS/60).toFixed(1)+'m \u00b7 '+elecWm.toFixed(0)+'W';
+    } else $('pb0').innerHTML='';
+  }
+
+  // === MODE 1 (Hover Only) ===
+  if(vtol){
+    $('h_pw').textContent=hWm.toFixed(0);
+    $('h_am').textContent=hA.toFixed(1);
+    $('h_thr').textContent='~'+hovThr.toFixed(0)+'%';
+    const hMS=usable/hWm*3600,hMM=hMS/60;
+    $('rt1').textContent=fmt(hMM);
+    $('rt1').className='big '+(hMM>10?'wa':'ba');
+    $('h_tw2').textContent=tw.toFixed(2);
+    $('h_tw2').style.color=tw>=af.twGood?'var(--grn)':tw>=af.twMin?'var(--ylw)':'var(--red)';
+  }
+
+  // === MODE 2 (Cruise Only) ===
+  $('c_pw').textContent=elecWm.toFixed(0);
+  $('c_am').textContent=(elecWm/BV).toFixed(1);
+  const cOS=usable/elecWm*3600,cOM=cOS/60,cOR=cOS*v/1e3;
+  $('rt2').textContent=fmt(cOM);
+  $('rt2').className='big '+(cOM>60?'go':cOM>30?'hi':'wa');
+  $('c_rng').textContent=cOR.toFixed(1);
+  $('c_rng').style.color=cOR>40?'var(--grn)':'var(--ylw)';
+  const ce=cOR>0?usable/cOR:0;$('c_eff2').textContent=ce>0?ce.toFixed(1):'\u2014';
+}
+
+// === INIT ===
+function initApp(){
+  buildAirframeSelect();
+  curAirframe=CFG.airframes[0];
+  // Set default frame weight from airframe config
+  $('s_fr').value=curAirframe.defaultFrameWeight;
+  // Update header
+  $('hdr_name').textContent=curAirframe.name;
+  $('hdr_sub').textContent=(curAirframe.description||'')+(curAirframe.airfoilName?' · '+curAirframe.airfoilName:'')+' · v3.0';
+  $('chart_title').textContent='Aerodynamic operating point'+(curAirframe.airfoilName?' — '+curAirframe.airfoilName:'');
+  updateNote();
+  updateVTOLVisibility();
+  buildMotorSelect();
+  curMotor=CFG.motors[+$('s_motor').value];
+  curCells=curMotor.defaultCells||curMotor.cells[curMotor.cells.length-1];
+  buildCellSelect();buildPropSelect();buildBatCapSelect();
+  window.addEventListener('resize',calc);
+  calc();
+}
+
+boot();
+</script>
+</body>
+</html>
