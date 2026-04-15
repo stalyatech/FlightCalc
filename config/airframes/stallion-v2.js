@@ -15,6 +15,14 @@ CFG.airframes.push({
   oswaldEff:   0.75,
   mac:         0.211,       // m
 
+  // Fuselage bounding-box (for Gazebo inertia calc, solid-box approx)
+  fuselageLength: 0.900,     // m  (X, forward)
+  fuselageHeight: 0.160,     // m  (Z, vertical)
+
+  // Center of gravity (link origin assumed at nose tip, Y=0 by symmetry)
+  cogX:            0.430,    // m  (from nose along X; ~25% MAC typical)
+  cogZ:            0.000,    // m  (+ = above mid-height, - = below)
+
   // Airfoil
   airfoilName: "Eppler E205",
   airfoilPolar: [

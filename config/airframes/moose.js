@@ -19,6 +19,14 @@ CFG.airframes.push({
   oswaldEff:   0.80,
   mac:         0.230,       // m (mean aerodynamic chord)
 
+  // Fuselage bounding-box (for Gazebo inertia calc, solid-box approx)
+  fuselageLength: 1.050,     // m  (X, forward)
+  fuselageHeight: 0.180,     // m  (Z, vertical)
+
+  // Center of gravity (link origin assumed at nose tip, Y=0 by symmetry)
+  cogX:            0.500,    // m  (from nose along X; ~25% MAC typical)
+  cogZ:            0.000,    // m  (+ = above mid-height, - = below)
+
   // Airfoil — Selig S3021 at Re ≈ 250k
   airfoilName: "Selig S3021",
   airfoilPolar: [

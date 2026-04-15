@@ -107,6 +107,18 @@ Back
 </div>
 
 <div class="card">
+<div class="card-title">Fuselage &amp; CoG (Gazebo inertia)</div>
+<div class="row2">
+<div class="field"><label>Fuselage length (mm)</label><input type="number" id="af_flen" step="1" placeholder="1050"><div class="hint">X axis, nose to tail</div></div>
+<div class="field"><label>Fuselage height (mm)</label><input type="number" id="af_fhgt" step="1" placeholder="180"><div class="hint">Z axis, bounding-box height</div></div>
+</div>
+<div class="row2">
+<div class="field"><label>CoG X from nose (mm)</label><input type="number" id="af_cogx" step="1" placeholder="500"><div class="hint">Leave blank = box center (L/2)</div></div>
+<div class="field"><label>CoG Z from mid-height (mm)</label><input type="number" id="af_cogz" step="1" value="0" placeholder="0"><div class="hint">+ = above mid, − = below</div></div>
+</div>
+</div>
+
+<div class="card">
 <div class="card-title">Airfoil</div>
 <div class="row2">
 <div class="field"><label>Airfoil name</label><input id="af_foil" placeholder="e.g. Eppler E205"></div>
@@ -366,6 +378,14 @@ function genAirframe(){
   const twg=parseFloat($('af_twg').value)||1.5;
   const trm=parseFloat($('af_trm').value)||1.2;
   const ub=parseInt($('af_ub').value)||80;
+  const flen=parseFloat($('af_flen').value);
+  const fhgt=parseFloat($('af_fhgt').value);
+  const cogxIn=$('af_cogx').value.trim();
+  const cogzIn=$('af_cogz').value.trim();
+  const flenM=isFinite(flen)?flen/1000:null;
+  const fhgtM=isFinite(fhgt)?fhgt/1000:null;
+  const cogxM=cogxIn!==''&&isFinite(+cogxIn)?(+cogxIn)/1000:(flenM!=null?flenM/2:null);
+  const cogzM=cogzIn!==''&&isFinite(+cogzIn)?(+cogzIn)/1000:0;
 
   const polarStr=polar.map(r=>'    ['+r[0]+', '+r[1]+', '+r[2]+']').join(',\n');
 
@@ -383,6 +403,14 @@ function genAirframe(){
   js+=`  aspectRatio: ${ar.toFixed?ar.toFixed(1):ar},\n`;
   js+=`  oswaldEff:   ${oe},\n`;
   js+=`  mac:         ${(mac/1000).toFixed(3)},       // m\n\n`;
+  if(flenM!=null&&fhgtM!=null){
+    js+=`  // Fuselage bounding-box (for Gazebo inertia calc, solid-box approx)\n`;
+    js+=`  fuselageLength: ${flenM.toFixed(3)},     // m  (X, forward)\n`;
+    js+=`  fuselageHeight: ${fhgtM.toFixed(3)},     // m  (Z, vertical)\n\n`;
+    js+=`  // Center of gravity (link origin assumed at nose tip, Y=0 by symmetry)\n`;
+    js+=`  cogX:            ${cogxM.toFixed(3)},    // m  (from nose along X)\n`;
+    js+=`  cogZ:            ${cogzM.toFixed(3)},    // m  (+ above mid, - below)\n\n`;
+  }
   js+=`  // Airfoil\n`;
   js+=`  airfoilName: "${foil}",\n`;
   js+=`  airfoilPolar: [\n${polarStr}\n  ],\n`;
@@ -569,6 +597,10 @@ function populateAirframe(af){
   $('af_span').value=af.wingspan?Math.round(af.wingspan*1000):'';
   calcAR();
   $('af_mac').value=af.mac?Math.round(af.mac*1000):'';
+  $('af_flen').value=af.fuselageLength!=null?Math.round(af.fuselageLength*1000):'';
+  $('af_fhgt').value=af.fuselageHeight!=null?Math.round(af.fuselageHeight*1000):'';
+  $('af_cogx').value=af.cogX!=null?Math.round(af.cogX*1000):'';
+  $('af_cogz').value=af.cogZ!=null?Math.round(af.cogZ*1000):0;
   $('af_oe').value=af.oswaldEff||0.75;
   $('af_cd0').value=af.cd0Penalty||0.008;
   $('af_foil').value=af.airfoilName||'';

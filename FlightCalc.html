@@ -251,6 +251,26 @@ Serve from a local HTTP server instead:</p>
 </div>
 </div>
 <div class="full">
+<div class="card">
+<div class="card-title">Inertia (Gazebo) <span style="text-transform:lowercase">— solid-box approx</span></div>
+<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+  <div class="ga" style="margin:0;flex:1 1 auto;min-width:260px;justify-content:flex-start">
+    <div class="gi"><div class="gv" id="i_m">—</div><div class="gl">Mass (kg)</div></div>
+    <div class="gi"><div class="gv" id="i_xx">—</div><div class="gl">Ixx · roll</div></div>
+    <div class="gi"><div class="gv" id="i_yy">—</div><div class="gl">Iyy · pitch</div></div>
+    <div class="gi"><div class="gv" id="i_zz">—</div><div class="gl">Izz · yaw</div></div>
+    <div class="gi"><div class="gv" id="i_cog">—</div><div class="gl">CoG (x,y,z) m</div></div>
+    <div class="gi"><div class="gv" id="i_dim">—</div><div class="gl">Box L×b×h m</div></div>
+  </div>
+  <div style="position:relative;flex:1 1 320px;min-width:280px">
+    <pre id="i_sdf" style="background:var(--bg);color:var(--tx2);font-family:'JetBrains Mono',monospace;font-size:0.625rem;padding:10px;border:1px solid var(--brd);border-radius:6px;margin:0;overflow-x:auto;line-height:1.45;white-space:pre">—</pre>
+    <button id="i_copy" onclick="copyInertialSDF()" style="position:absolute;top:6px;right:6px;background:var(--bg3);border:1px solid var(--brd);color:var(--tx2);border-radius:4px;padding:3px 10px;font-size:0.5625rem;font-family:'DM Sans',sans-serif;cursor:pointer">Copy</button>
+  </div>
+</div>
+<div style="font-size:0.5625rem;color:var(--tx3);margin-top:10px;line-height:1.45">Link origin assumed at nose tip · uniform density · I tensor about CoG (Ixy=Ixz=Iyz=0)<span id="i_warn" style="color:var(--ylw);display:none"> · ⚠ CoG deviates &gt;10% from box center — uniform-density assumption inconsistent</span></div>
+</div>
+</div>
+<div class="full">
 <div class="note" id="note_text">
 </div>
 </div>
@@ -264,6 +284,14 @@ function toggleMenu(){$('menuDrop').classList.toggle('open');}
 document.addEventListener('click',function(e){
   if(!e.target.closest('.hdr-menu')) $('menuDrop').classList.remove('open');
 });
+
+function copyInertialSDF(){
+  const txt=$('i_sdf').textContent;
+  const btn=$('i_copy');
+  navigator.clipboard.writeText(txt).then(()=>{
+    const o=btn.textContent;btn.textContent='Copied';setTimeout(()=>{btn.textContent=o;},1200);
+  }).catch(()=>{btn.textContent='Failed';setTimeout(()=>{btn.textContent='Copy';},1200);});
+}
 
 function exportPDF(){
   $('menuDrop').classList.remove('open');
@@ -790,6 +818,33 @@ function calc(){
     $('r_tw').className='v '+(tw>=af.twGood?'go':tw>=af.twMin?'wa':'ba');
   }
   $('r_mt').textContent=pr.thrust+'g';
+
+  // === Inertia (solid-box approximation for Gazebo) ===
+  const Lx=af.fuselageLength||0, Ly=af.wingspan||0, Lz=af.fuselageHeight||0;
+  const Ixx=(m*(Ly*Ly+Lz*Lz))/12;
+  const Iyy=(m*(Lx*Lx+Lz*Lz))/12;
+  const Izz=(m*(Lx*Lx+Ly*Ly))/12;
+  const cogX=(af.cogX!=null?af.cogX:Lx/2), cogY=0, cogZ=(af.cogZ!=null?af.cogZ:0);
+  $('i_m').textContent =m.toFixed(3);
+  $('i_xx').textContent=Ixx.toFixed(4);
+  $('i_yy').textContent=Iyy.toFixed(4);
+  $('i_zz').textContent=Izz.toFixed(4);
+  $('i_cog').textContent=cogX.toFixed(2)+','+cogY.toFixed(2)+','+cogZ.toFixed(2);
+  $('i_dim').textContent=Lx.toFixed(2)+'×'+Ly.toFixed(2)+'×'+Lz.toFixed(2);
+  // Warn if CoG deviates >10% of fuselage length from box geometric center (uniform-density inconsistency)
+  const cogDev=Lx>0?Math.abs(cogX-Lx/2)/Lx:0;
+  $('i_warn').style.display=cogDev>0.10?'inline':'none';
+  // SDF <inertial> block (Gazebo/SDFormat)
+  $('i_sdf').textContent=
+    '<inertial>\n'+
+    '  <pose>'+cogX.toFixed(4)+' '+cogY.toFixed(4)+' '+cogZ.toFixed(4)+' 0 0 0</pose>\n'+
+    '  <mass>'+m.toFixed(4)+'</mass>\n'+
+    '  <inertia>\n'+
+    '    <ixx>'+Ixx.toFixed(6)+'</ixx><ixy>0</ixy><ixz>0</ixz>\n'+
+    '    <iyy>'+Iyy.toFixed(6)+'</iyy><iyz>0</iyz>\n'+
+    '    <izz>'+Izz.toFixed(6)+'</izz>\n'+
+    '  </inertia>\n'+
+    '</inertial>';
 
   $('a_cl').textContent=aero.CL.toFixed(2);
   $('a_cl').style.color=aero.CL>af.clMax?'var(--red)':aero.CL>.8?'var(--ylw)':'var(--grn)';
