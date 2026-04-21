@@ -27,5 +27,6 @@ const CFG_FILES = [
 
   // — Airframes —
   'config/airframes/stallion-v2.js',
-  'config/airframes/moose.js'
+  'config/airframes/moose.js',
+  'config/airframes/stork-vtol.js'
 ];

@@ -20,8 +20,8 @@ CFG.airframes.push({
   fuselageHeight: 0.160,     // m  (Z, vertical)
 
   // Center of gravity (link origin assumed at nose tip, Y=0 by symmetry)
-  cogX:            0.430,    // m  (from nose along X; ~25% MAC typical)
-  cogZ:            0.000,    // m  (+ = above mid-height, - = below)
+  cogX:            0.370,    // m  (from nose along X)
+  cogZ:            0.000,    // m  (+ above mid, - below)
 
   // Airfoil
   airfoilName: "Eppler E205",

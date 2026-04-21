@@ -35,10 +35,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--bg4);border-radius:2px;outline:none}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--acc);cursor:pointer}
 select{background:var(--bg3);color:var(--tx);border:1px solid var(--brd);border-radius:6px;padding:5px 8px;font-size:0.6875rem;font-family:'DM Sans',sans-serif;width:100%;cursor:pointer}
-.sel-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.sel-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.sel-row:last-of-type{margin-bottom:14px}
 .sel-row .card{padding:10px;position:relative;flex:1 1 120px;min-width:120px}
 .sel-row .card:first-child{flex:2 1 200px;min-width:180px}
+.sel-row-pwr .card:first-child{flex:1 1 120px;min-width:120px}
 .sel-row select{margin-top:2px}
+.split-only{display:none}
+body.split .split-only{display:block}
+body.split .unified-only{display:none}
 .cdd{position:relative}
 .cdd-btn{background:var(--bg3);color:var(--tx);border:1px solid var(--brd);border-radius:6px;padding:5px 8px;font-size:0.6875rem;font-family:'DM Sans',sans-serif;width:100%;cursor:pointer;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:2px}
 .cdd-btn::after{content:'▾';font-size:0.5625rem;color:var(--tx3);flex-shrink:0}
@@ -131,16 +136,6 @@ Serve from a local HTTP server instead:</p>
 <select id="s_airframe" style="display:none" onchange="onAirframeChange()"></select>
 </div>
 <div class="card">
-<div class="card-title">Motor</div>
-<div class="cdd" id="d_motor"><button class="cdd-btn" onclick="toggleCdd('d_motor')">—</button><div class="cdd-list"></div></div>
-<select id="s_motor" style="display:none" onchange="onMotorChange()"></select>
-</div>
-<div class="card">
-<div class="card-title">Propeller</div>
-<div class="cdd" id="d_prop"><button class="cdd-btn" onclick="toggleCdd('d_prop')">—</button><div class="cdd-list"></div></div>
-<select id="s_prop" style="display:none" onchange="onPropChange()"></select>
-</div>
-<div class="card">
 <div class="card-title">Battery cell</div>
 <div class="cdd" id="d_cell"><button class="cdd-btn" onclick="toggleCdd('d_cell')">—</button><div class="cdd-list"></div></div>
 <select id="s_cell" style="display:none" onchange="onCellChange()"></select>
@@ -149,6 +144,38 @@ Serve from a local HTTP server instead:</p>
 <div class="card-title">Battery capacity</div>
 <div class="cdd" id="d_bat"><button class="cdd-btn" onclick="toggleCdd('d_bat')">—</button><div class="cdd-list"></div></div>
 <select id="s_bat" style="display:none" onchange="calc()"></select>
+</div>
+</div>
+<div class="sel-row sel-row-pwr">
+<div class="card unified-only">
+<div class="card-title">Motor</div>
+<div class="cdd" id="d_motor"><button class="cdd-btn" onclick="toggleCdd('d_motor')">—</button><div class="cdd-list"></div></div>
+<select id="s_motor" style="display:none" onchange="onMotorChange()"></select>
+</div>
+<div class="card unified-only">
+<div class="card-title">Propeller</div>
+<div class="cdd" id="d_prop"><button class="cdd-btn" onclick="toggleCdd('d_prop')">—</button><div class="cdd-list"></div></div>
+<select id="s_prop" style="display:none" onchange="onPropChange()"></select>
+</div>
+<div class="card split-only">
+<div class="card-title" id="ct_hmotor">Hover Motor</div>
+<div class="cdd" id="d_hmotor"><button class="cdd-btn" onclick="toggleCdd('d_hmotor')">—</button><div class="cdd-list"></div></div>
+<select id="s_hmotor" style="display:none" onchange="onHoverMotorChange()"></select>
+</div>
+<div class="card split-only">
+<div class="card-title">Hover Prop</div>
+<div class="cdd" id="d_hprop"><button class="cdd-btn" onclick="toggleCdd('d_hprop')">—</button><div class="cdd-list"></div></div>
+<select id="s_hprop" style="display:none" onchange="onHoverPropChange()"></select>
+</div>
+<div class="card split-only">
+<div class="card-title" id="ct_cmotor">Cruise Motor</div>
+<div class="cdd" id="d_cmotor"><button class="cdd-btn" onclick="toggleCdd('d_cmotor')">—</button><div class="cdd-list"></div></div>
+<select id="s_cmotor" style="display:none" onchange="onCruiseMotorChange()"></select>
+</div>
+<div class="card split-only">
+<div class="card-title">Cruise Prop</div>
+<div class="cdd" id="d_cprop"><button class="cdd-btn" onclick="toggleCdd('d_cprop')">—</button><div class="cdd-list"></div></div>
+<select id="s_cprop" style="display:none" onchange="onCruisePropChange()"></select>
 </div>
 </div>
 <div class="grid">
@@ -304,9 +331,12 @@ function exportPDF(){
   const date=new Date().toLocaleString();
 
   // Collect selections
+  const split=isSplit();
   const selAf=$('d_airframe').querySelector('.cdd-btn').textContent;
-  const selMt=$('d_motor').querySelector('.cdd-btn').textContent;
-  const selPr=$('d_prop').querySelector('.cdd-btn').textContent;
+  const selMt=split?$('d_cmotor').querySelector('.cdd-btn').textContent:$('d_motor').querySelector('.cdd-btn').textContent;
+  const selPr=split?$('d_cprop').querySelector('.cdd-btn').textContent:$('d_prop').querySelector('.cdd-btn').textContent;
+  const selHmt=split?$('d_hmotor').querySelector('.cdd-btn').textContent:'';
+  const selHpr=split?$('d_hprop').querySelector('.cdd-btn').textContent:'';
   const selCl=$('d_cell').querySelector('.cdd-btn').textContent;
   const selBt=$('d_bat').querySelector('.cdd-btn').textContent;
 
@@ -415,7 +445,15 @@ img{width:100%;border-radius:6px;margin:8px 0}
 
   // Configuration
   html+=`<h2>Configuration</h2>`;
-  html+=tbl('',[ ['Airframe',selAf],['Motor',selMt],['Propeller',selPr],['Battery',selCl+' / '+selBt] ]);
+  const cfgRows=split
+    ? [ ['Airframe',selAf],
+        ['Hover Motor ('+af.numMotors+'×)',selHmt],
+        ['Hover Prop',selHpr],
+        ['Cruise Motor ('+af.numCruiseMotors+'×)',selMt],
+        ['Cruise Prop',selPr],
+        ['Battery',selCl+' / '+selBt] ]
+    : [ ['Airframe',selAf],['Motor',selMt],['Propeller',selPr],['Battery',selCl+' / '+selBt] ];
+  html+=tbl('',cfgRows);
 
   // Flight result
   html+=`<h2>Flight Time — ${flightTitle}</h2>`;
@@ -458,11 +496,12 @@ function editConfig(type){
     if(!af) return;
     data=af; tab=0;
   } else if(type==='motor'){
-    const mt=CFG.motors[+$('s_motor').value];
+    const mt=isSplit()?curMotor:CFG.motors[+$('s_motor').value];
     if(!mt) return;
     data=mt; tab=1;
   } else if(type==='prop'){
-    const pr=CFG.props.find(p=>p.id===$('s_prop').value);
+    const pid=isSplit()?curPropId:$('s_prop').value;
+    const pr=CFG.props.find(p=>p.id===pid);
     if(!pr) return;
     data=pr; tab=2;
   } else if(type==='battery'){
@@ -500,17 +539,28 @@ async function boot(){
 }
 
 // === CURRENT SELECTION STATE ===
+// In unified mode: curMotor/curPropId drive both hover and cruise.
+// In split mode:   curMotor/curPropId = cruise; curHoverMotor/curHoverPropId = hover.
 let curAirframe=null, curMotor=null, curCells=0, curPropId='', curBatIdx=0;
+let curHoverMotor=null, curHoverPropId='';
 
 // === HELPERS ===
 function $(id){return document.getElementById(id);}
 function propById(id){return CFG.props.find(p=>p.id===id);}
 function batByCells(c){return CFG.batteries.find(b=>b.cells===c);}
-function getMotorPropData(){
+function isVTOL(){return curAirframe&&curAirframe.type==='vtol';}
+function isSplit(){return !!(curAirframe&&curAirframe.motorConfig&&curAirframe.motorConfig.mode==='split');}
+function getCruiseData(){
   if(!curMotor||!curMotor.propData[curCells]) return null;
   return curMotor.propData[curCells][curPropId]||null;
 }
-function isVTOL(){return curAirframe&&curAirframe.type==='vtol';}
+function getHoverData(){
+  const m  = isSplit() ? curHoverMotor   : curMotor;
+  const pid= isSplit() ? curHoverPropId  : curPropId;
+  if(!m||!m.propData[curCells]) return null;
+  return m.propData[curCells][pid]||null;
+}
+function getHoverProp(){return propById(isSplit()?curHoverPropId:curPropId);}
 
 // === CUSTOM DROPDOWN ===
 function toggleCdd(id){
@@ -568,58 +618,85 @@ function buildAirframeSelect(){
   syncCdd('d_airframe','s_airframe');
 }
 
-function buildMotorSelect(){
-  const sel=$('s_motor');sel.innerHTML='';
-  const prev=curMotor?curMotor.id:null;
+function _populateMotorSelect(selId,cddId,prevMotor,defaultMotorId){
+  const sel=$(selId);sel.innerHTML='';
+  const prev=prevMotor?prevMotor.id:null;
   let foundPrev=false;
   CFG.motors.forEach((m,i)=>{
     if(curAirframe.compatMotors.length&&!curAirframe.compatMotors.includes(m.id)) return;
     const o=document.createElement('option');o.value=i;
     o.textContent=m.name+' '+m.kv+'KV ('+m.cells.map(c=>c+'S').join('/')+')';
     sel.appendChild(o);
-    if(m.id===prev) {sel.value=i;foundPrev=true;}
+    if(m.id===prev){sel.value=i;foundPrev=true;}
   });
   if(!foundPrev){
-    const defIdx=CFG.motors.findIndex(m=>m.id==='t-motor-f90');
+    const defId=defaultMotorId||'t-motor-f90';
+    const defIdx=CFG.motors.findIndex(m=>m.id===defId);
     if(defIdx>=0&&sel.querySelector('option[value="'+defIdx+'"]')) sel.value=defIdx;
   }
-  syncCdd('d_motor','s_motor');
+  syncCdd(cddId,selId);
+}
+function buildMotorSelect(){
+  _populateMotorSelect('s_motor','d_motor',curMotor,curAirframe&&curAirframe.motorConfig&&curAirframe.motorConfig.cruise&&curAirframe.motorConfig.cruise.defaultMotor);
+}
+function buildCruiseMotorSelect(){
+  _populateMotorSelect('s_cmotor','d_cmotor',curMotor,curAirframe&&curAirframe.motorConfig&&curAirframe.motorConfig.cruise&&curAirframe.motorConfig.cruise.defaultMotor);
+}
+function buildHoverMotorSelect(){
+  _populateMotorSelect('s_hmotor','d_hmotor',curHoverMotor,curAirframe&&curAirframe.motorConfig&&curAirframe.motorConfig.hover&&curAirframe.motorConfig.hover.defaultMotor);
 }
 
 function buildCellSelect(){
   const sel=$('s_cell');sel.innerHTML='';
   const prevCells=curCells;
-  curMotor.cells.forEach(c=>{
+  // Split mode: cells must be supported by BOTH hover and cruise motor
+  const baseCells=isSplit()&&curHoverMotor
+    ? curMotor.cells.filter(c=>curHoverMotor.cells.includes(c))
+    : curMotor.cells;
+  baseCells.forEach(c=>{
     if(curAirframe.compatBatteries.length&&!curAirframe.compatBatteries.includes(c)) return;
     const b=batByCells(c);if(!b) return;
     const o=document.createElement('option');o.value=c;
     o.textContent=c+'S — '+b.voltage.toFixed(1)+'V';
     sel.appendChild(o);
   });
-  if(curMotor.cells.includes(prevCells)){sel.value=prevCells;}
-  else{sel.value=curMotor.defaultCells||curMotor.cells[curMotor.cells.length-1];}
+  if(baseCells.includes(prevCells)){sel.value=prevCells;}
+  else{
+    const defC=curMotor.defaultCells||baseCells[baseCells.length-1]||curMotor.cells[curMotor.cells.length-1];
+    sel.value=defC;
+  }
   curCells=+sel.value;
   syncCdd('d_cell','s_cell');
 }
 
-function buildPropSelect(){
-  const sel=$('s_prop');sel.innerHTML='';
-  const prevId=curPropId;
-  const pd=curMotor.propData[curCells]||{};
+function _populatePropSelect(selId,cddId,motor,prevPropId,defaultPropId){
+  const sel=$(selId);sel.innerHTML='';
+  const pd=motor?(motor.propData[curCells]||{}):{};
   let foundPrev=false;
   CFG.props.forEach(p=>{
     if(!pd[p.id]) return;
-    // Compatibility filter
     if(curAirframe.compatProps.length&&!curAirframe.compatProps.includes(p.id)) return;
     const d=pd[p.id];
     const o=document.createElement('option');o.value=p.id;
     o.textContent=p.name+' — '+p.info+' · ~'+d.thrust+'g/mot';
     sel.appendChild(o);
-    if(p.id===prevId) foundPrev=true;
+    if(p.id===prevPropId) foundPrev=true;
   });
-  if(foundPrev){sel.value=prevId;}
-  curPropId=sel.value;
-  syncCdd('d_prop','s_prop');
+  if(foundPrev){sel.value=prevPropId;}
+  else if(defaultPropId&&sel.querySelector('option[value="'+defaultPropId+'"]')){
+    sel.value=defaultPropId;
+  }
+  syncCdd(cddId,selId);
+  return sel.value;
+}
+function buildPropSelect(){
+  curPropId=_populatePropSelect('s_prop','d_prop',curMotor,curPropId,curAirframe&&curAirframe.motorConfig&&curAirframe.motorConfig.cruise&&curAirframe.motorConfig.cruise.defaultProp);
+}
+function buildCruisePropSelect(){
+  curPropId=_populatePropSelect('s_cprop','d_cprop',curMotor,curPropId,curAirframe&&curAirframe.motorConfig&&curAirframe.motorConfig.cruise&&curAirframe.motorConfig.cruise.defaultProp);
+}
+function buildHoverPropSelect(){
+  curHoverPropId=_populatePropSelect('s_hprop','d_hprop',curHoverMotor,curHoverPropId,curAirframe&&curAirframe.motorConfig&&curAirframe.motorConfig.hover&&curAirframe.motorConfig.hover.defaultProp);
 }
 
 function buildBatCapSelect(){
@@ -649,6 +726,11 @@ function updateVTOLVisibility(){
   // If fixed-wing and mode 0 or 1, switch to mode 2
   if(!vtol){setMode(2);}
 }
+function updatePowertrainTitles(){
+  const af=curAirframe;if(!af) return;
+  $('ct_hmotor').textContent='Hover Motor ('+af.numMotors+'×)';
+  $('ct_cmotor').textContent='Cruise Motor ('+af.numCruiseMotors+'×)';
+}
 
 // === EVENT HANDLERS ===
 function onAirframeChange(){
@@ -664,10 +746,26 @@ function onAirframeChange(){
   updateNote();
   // Update visibility
   updateVTOLVisibility();
+  document.body.classList.toggle('split',isSplit());
+  updatePowertrainTitles();
   // Rebuild dependent selects with compatibility filtering
-  buildMotorSelect();
-  curMotor=CFG.motors[+$('s_motor').value];
-  buildCellSelect();buildPropSelect();buildBatCapSelect();
+  if(isSplit()){
+    buildHoverMotorSelect();
+    curHoverMotor=CFG.motors[+$('s_hmotor').value];
+    buildCruiseMotorSelect();
+    curMotor=CFG.motors[+$('s_cmotor').value];
+    buildCellSelect();
+    buildHoverPropSelect();
+    buildCruisePropSelect();
+  } else {
+    buildMotorSelect();
+    curMotor=CFG.motors[+$('s_motor').value];
+    buildCellSelect();
+    buildPropSelect();
+    // Alias hover state to unified selection so calc() works uniformly
+    curHoverMotor=curMotor;curHoverPropId=curPropId;
+  }
+  buildBatCapSelect();
   calc();
 }
 
@@ -675,13 +773,23 @@ function onMotorChange(){
   curMotor=CFG.motors[+$('s_motor').value];
   buildCellSelect();buildPropSelect();buildBatCapSelect();calc();
 }
+function onCruiseMotorChange(){
+  curMotor=CFG.motors[+$('s_cmotor').value];
+  buildCellSelect();buildCruisePropSelect();buildHoverPropSelect();buildBatCapSelect();calc();
+}
+function onHoverMotorChange(){
+  curHoverMotor=CFG.motors[+$('s_hmotor').value];
+  buildCellSelect();buildHoverPropSelect();buildCruisePropSelect();buildBatCapSelect();calc();
+}
 function onCellChange(){
   curCells=+$('s_cell').value;
-  buildPropSelect();buildBatCapSelect();calc();
+  if(isSplit()){buildHoverPropSelect();buildCruisePropSelect();}
+  else{buildPropSelect();}
+  buildBatCapSelect();calc();
 }
-function onPropChange(){
-  curPropId=$('s_prop').value;calc();
-}
+function onPropChange(){curPropId=$('s_prop').value;calc();}
+function onCruisePropChange(){curPropId=$('s_cprop').value;calc();}
+function onHoverPropChange(){curHoverPropId=$('s_hprop').value;calc();}
 function setMode(i){document.querySelectorAll('.mtab').forEach((t,j)=>t.classList.toggle('active',j===i));document.querySelectorAll('.mpan').forEach((p,j)=>p.classList.toggle('active',j===i));}
 
 // === PHYSICS ===
@@ -745,7 +853,13 @@ function updateNote(){
   let txt='<strong>Calculation model:</strong> ';
   txt+=af.airfoilName+' polar (XFOIL), Re-interpolated. AR='+af.aspectRatio+', Oswald e='+af.oswaldEff+'. ';
   txt+='3D-print surface: CD0+'+af.cd0Penalty+'. ';
-  if(vtol) txt+='Hover: momentum theory ('+af.numMotors+' motors). Cruise: '+af.numCruiseMotors+' front motors. ';
+  if(vtol){
+    if(isSplit()){
+      txt+='Hover: '+af.numMotors+'× lift motor (momentum theory). Cruise: '+af.numCruiseMotors+'× pusher (separate motor & prop). ';
+    } else {
+      txt+='Hover: momentum theory ('+af.numMotors+' motors). Cruise: '+af.numCruiseMotors+' front motors. ';
+    }
+  }
   txt+='ISA atmo. LiPo '+(af.usableBattery*100).toFixed(0)+'% usable.<br>';
   txt+='<strong>Safety margin</strong> applies to both '+(vtol?'hover and ':'')+'cruise power — affects all energy consumption, flight time, range, and current readings.<br>';
   txt+='<strong>Stall margin (×Vs)</strong> sets the minimum safe cruise speed relative to stall speed. 1.3=FAR Part 23. Lower=aggressive, higher=conservative.<br>';
@@ -757,8 +871,10 @@ function updateNote(){
 // === MAIN CALCULATION ===
 function calc(){
   const af=curAirframe;if(!af) return;
-  const pr=getMotorPropData();if(!pr) return;
-  const prop=propById(curPropId);if(!prop) return;
+  const cpr=getCruiseData();if(!cpr) return;
+  const hpr=getHoverData();if(!hpr) return;
+  const cprop=propById(curPropId);if(!cprop) return;
+  const hprop=getHoverProp();if(!hprop) return;
   const batCfg=batByCells(curCells);if(!batCfg) return;
   const bat=batCfg.options[+$('s_bat').value]||batCfg.options[0];
   const BV=batCfg.voltage;
@@ -787,14 +903,14 @@ function calc(){
   const r=rhoA(alt), v=sp/3.6;
   const aero=aeroCalc(af,m,v,r);
   const vs=stallV(af,m,r), vsK=vs*3.6, vmK=vsK*sm, wl=auw/af.wingAreaDm2;
-  const tw=pr.thrust*af.numMotors/auw;
-  // Cruise — motor power + avionics + safety margin
+  const tw=hpr.thrust*af.numMotors/auw;
+  // Cruise — cruise motor + prop + avionics + safety margin
   const drag=m*9.81/aero.LD, mechW=drag*v;
-  const elecW=mechW/pr.cruiseEff+av, elecWm=elecW*(1+mg/100), crA=elecWm/BV;
-  // Hover — motor power + avionics + safety margin
-  const hW=vtol?hovP(af,m,r,prop.diameter,pr.hoverEff)+av:0;
+  const elecW=mechW/cpr.cruiseEff+av, elecWm=elecW*(1+mg/100), crA=elecWm/BV;
+  // Hover — hover motor + prop + avionics + safety margin
+  const hW=vtol?hovP(af,m,r,hprop.diameter,hpr.hoverEff)+av:0;
   const hWm=hW*(1+mg/100), hA=hWm/BV;
-  const hovThr=vtol?auw/(pr.thrust*af.numMotors)*100:0;
+  const hovThr=vtol?auw/(hpr.thrust*af.numMotors)*100:0;
 
   $('w_fr').textContent=fr;
   $('w_bt').textContent=bat.weight;
@@ -817,7 +933,7 @@ function calc(){
     $('r_tw').textContent=tw.toFixed(2);
     $('r_tw').className='v '+(tw>=af.twGood?'go':tw>=af.twMin?'wa':'ba');
   }
-  $('r_mt').textContent=pr.thrust+'g';
+  $('r_mt').textContent=(isSplit()?hpr.thrust:cpr.thrust)+'g';
 
   // === Inertia (solid-box approximation for Gazebo) ===
   const Lx=af.fuselageLength||0, Ly=af.wingspan||0, Lz=af.fuselageHeight||0;
@@ -928,10 +1044,25 @@ function initApp(){
   $('chart_title').textContent='Aerodynamic operating point'+(curAirframe.airfoilName?' — '+curAirframe.airfoilName:'');
   updateNote();
   updateVTOLVisibility();
-  buildMotorSelect();
-  curMotor=CFG.motors[+$('s_motor').value];
-  curCells=curMotor.defaultCells||curMotor.cells[curMotor.cells.length-1];
-  buildCellSelect();buildPropSelect();buildBatCapSelect();
+  document.body.classList.toggle('split',isSplit());
+  updatePowertrainTitles();
+  if(isSplit()){
+    buildHoverMotorSelect();
+    curHoverMotor=CFG.motors[+$('s_hmotor').value];
+    buildCruiseMotorSelect();
+    curMotor=CFG.motors[+$('s_cmotor').value];
+    curCells=curMotor.defaultCells||curMotor.cells[curMotor.cells.length-1];
+    buildCellSelect();
+    buildHoverPropSelect();
+    buildCruisePropSelect();
+  } else {
+    buildMotorSelect();
+    curMotor=CFG.motors[+$('s_motor').value];
+    curCells=curMotor.defaultCells||curMotor.cells[curMotor.cells.length-1];
+    buildCellSelect();buildPropSelect();
+    curHoverMotor=curMotor;curHoverPropId=curPropId;
+  }
+  buildBatCapSelect();
   window.addEventListener('resize',calc);
   calc();
 }
